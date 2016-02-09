@@ -42,7 +42,6 @@ IVideo Renderer<T>::render(const IVideo& videoA,
             pCost[i] = pU[i]*pU[i] + pV[i]*pV[i];
             pCost[i] = exp(-pCost[i]/(2*sig*sig));
         }
-        cost.exportVideo(params.outputPath,"costVideo");
     }
 
     Video<T> mask(warpField.getHeight(),warpField.getWidth(),warpField.frameCount(),1);
@@ -64,14 +63,8 @@ IVideo Renderer<T>::render(const IVideo& videoA,
         out.copy(outPrefilt);
     }
 
-    boost::format f("mask_%02d_%02d_%02d");
-    f = f % exageration[0] % exageration[1] % exageration[2];
-    mask.exportVideo(params.outputPath, f.str());
 
     out.scalarMultiply(-1);
-    f = boost::format("forwardWarpedFlow_%02d_%02d_%02d");
-    f = f % exageration[0] % exageration[1] % exageration[2];
-    out.exportSpacetimeMap(params.outputPath, f.str());
 
     IVideo warpedA(videoA.size());
     VideoProcessing::backwardWarp(videoA,out,warpedA);
@@ -88,6 +81,5 @@ IVideo Renderer<T>::render(const IVideo& videoA,
     return warpedA;
 }
 
-#pragma mark - Template instantiations
 template class Renderer<float>;
 template class Renderer<double>;

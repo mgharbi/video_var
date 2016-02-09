@@ -174,6 +174,5 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField, const Video<T> 
     fprintf(stderr,"done.\n");
 }
 
-#pragma mark - Template instantiations
 template class STWarp<float>;
 template class STWarp<double>;

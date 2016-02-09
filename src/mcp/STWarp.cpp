@@ -16,11 +16,6 @@ STWarp<T>::STWarp() {
     init();
 }
 
-template <class T>
-STWarp<T>::STWarp(fs::path outPath) {
-    init();
-    params.outputPath = outPath;
-}
 
 template <class T>
 void STWarp<T>::init() {
@@ -31,7 +26,6 @@ void STWarp<T>::init() {
     maskA  = nullptr;
     flowA  = nullptr;
     initialWarpField = nullptr;
-    cout << "init " << endl;
 }
 
 template <class T>
@@ -41,35 +35,37 @@ void STWarp<T>::setInitialWarpField(WarpingField<T> initial) {
 
 template <class T>
 STWarp<T>::~STWarp() {
-    if( flowA != NULL ){
+    if( flowA != nullptr ){
         delete flowA;
-        flowA = NULL;
+        flowA = nullptr;
     }
-    if( maskA != NULL ){
+    if( videoA != nullptr ){
+        delete videoA;
+        videoA = nullptr;
+    }
+    if( videoB != nullptr ){
+        delete videoB;
+        videoB = nullptr;
+    }
+    if( maskA != nullptr ){
         delete maskA;
-        maskA = NULL;
+        maskA = nullptr;
     }
-    if( initialWarpField != NULL ){
+    if( initialWarpField != nullptr ){
         delete initialWarpField;
-        initialWarpField = NULL;
+        initialWarpField = nullptr;
     }
     if(  dimensions.empty() ){
         // TODO: check that
         dimensions.clear();
     }
-    cout << "destroy " << endl;
 }
 
-// template <class T>
-// void STWarp<T>::loadMasks(fs::path pathA, fs::path pathB) {
-//     maskA = new IVideo(pathA);
-//     maskA->collapse();
-// }
 
 template <class T>
-void STWarp<T>::setVideos(IVideo *A, IVideo *B) {
-    videoA = A;
-    videoB = B;
+void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
+    videoA = new IVideo(A);
+    videoB = new IVideo(B);
 
     // if(videoA->getHeight()!= videoB->getHeight() ||
     //     videoA->getWidth() != videoB->getWidth() ||
@@ -174,8 +170,8 @@ void STWarp<T>::thresholdFlow(double thresh) {
 //     DImage im1(s.width,s.height,nChannels);
 //     DImage im2(s.width,s.height,nChannels);
 //
-//     T *pOF = NULL; 
-//     const unsigned char *pVideo = NULL;
+//     T *pOF = nullptr; 
+//     const unsigned char *pVideo = nullptr;
 //     int start_frame = 0;
 //     int end_frame = videoA->frameCount()-1;
 //     int frame_step = 1;
@@ -245,38 +241,38 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
     printf("+ Building ST-pyramids with %d levels...",n);
     pyramidA[0] = videoA;
     pyramidB[0] = videoB;
-    pyrMaskA[0] = maskA;
-    pyrFlowA[0] = flowA;
+    // pyrMaskA[0] = maskA;
+    // pyrFlowA[0] = flowA;
     IVideo copy;
-    WarpingField<T> flowCopy;
+    // WarpingField<T> flowCopy;
     for (int i = 1; i < n; ++i) {
         pyramidA[i] = new IVideo(pyrSizes[i][0],
                 pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
         pyramidB[i] = new IVideo(pyrSizes[i][0],
                 pyrSizes[i][1],pyrSizes[i][3],dimensions[4]);
-        pyrMaskA[i] = new IVideo(pyrSizes[i][0],
-                pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
-        pyrFlowA[i] = new WarpingField<T>(pyrSizes[i][0],
-                pyrSizes[i][1],pyrSizes[i][2],2);
+        // pyrMaskA[i] = new IVideo(pyrSizes[i][0],
+        //         pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
+        // pyrFlowA[i] = new WarpingField<T>(pyrSizes[i][0],
+        //         pyrSizes[i][1],pyrSizes[i][2],2);
 
         // Lowpass then downsample
         copy.copy(*pyramidA[i-1]);
         VideoProcessing::resize(copy,pyramidA[i]);
         copy.copy(*pyramidB[i-1]);
         VideoProcessing::resize(copy,pyramidB[i]);
-        copy.copy(*pyrMaskA[i-1]);
-        VideoProcessing::resize(copy,pyrMaskA[i]);
+        // copy.copy(*pyrMaskA[i-1]);
+        // VideoProcessing::resize(copy,pyrMaskA[i]);
 
-        flowCopy.copy(*pyrFlowA[i-1]);
-        VideoProcessing::resize(flowCopy,pyrFlowA[i]);
+        // flowCopy.copy(*pyrFlowA[i-1]);
+        // VideoProcessing::resize(flowCopy,pyrFlowA[i]);
 
         // Rescale optical flow
-        vector<int> oldDim = pyrFlowA[i-1]->dimensions();
-        vector<int> newDim = pyrFlowA[i]->dimensions();
-        for (int d = 0; d < 2; ++d) {
-            T ratio = ( (T) newDim[d] )/oldDim[d];
-            pyrFlowA[i]->scalarMultiplyChannel(ratio,d);
-        }
+        // vector<int> oldDim = pyrFlowA[i-1]->dimensions();
+        // vector<int> newDim = pyrFlowA[i]->dimensions();
+        // for (int d = 0; d < 2; ++d) {
+        //     T ratio = ( (T) newDim[d] )/oldDim[d];
+        //     pyrFlowA[i]->scalarMultiplyChannel(ratio,d);
+        // }
     }
     printf("done.\n");
 }
@@ -315,7 +311,7 @@ WarpingField<T> STWarp<T>::computeWarp() {
     buildPyramid(pyrSizes,pyramidA,pyramidB,pyrMaskA,pyrFlowA);
 
     WarpingField<T> warpField;
-    if( initialWarpField != NULL ){
+    if( initialWarpField != nullptr ){
         printf("+ Using init field\n");
         warpField = *initialWarpField;
         // warpField.scalarMultiplyChannel(0, 0);
@@ -342,7 +338,7 @@ WarpingField<T> STWarp<T>::computeWarp() {
     for (int i = n-1; i >= 0 ; --i) {
         videoA = pyramidA[i];
         videoB = pyramidB[i];
-        flowA  = pyrFlowA[i];
+        // flowA  = pyrFlowA[i];
 
         // update dimensions
         this->dimensions = videoA->dimensions();
@@ -355,18 +351,19 @@ WarpingField<T> STWarp<T>::computeWarp() {
         // computeUVW
         multiscaleIteration(warpField);
 
-        if( params.debug ){
-            boost::format outPyr("%s/pyramid");
-            outPyr = outPyr % params.outputPath.c_str();
-            boost::format fuvw("%s_uvw%02d");
-            warpField.exportSpacetimeMap(outPyr.str(), (fuvw % "video"% i).str());
-        }
-
         // Cleanup allocated videos
         if (i != 0) {
-            if(flowA != NULL) {
+            if(flowA != nullptr) {
                 delete flowA;
-                flowA = NULL;
+                flowA = nullptr;
+            }
+            if( videoA != nullptr ){
+                delete videoA;
+                videoA = nullptr;
+            }
+            if( videoB != nullptr ){
+                delete videoB;
+                videoB = nullptr;
             }
         }
     }
@@ -528,7 +525,6 @@ void STWarp<T>::setDefaultParams() {
 template <class T>
 void STWarp<T>::setParams(STWarpParams params) {
     this->params = params;
-    cout << "set params" << endl;
 }
 
 /**
@@ -539,15 +535,6 @@ STWarpParams STWarp<T>::getParams() {
     return params;
 }
 
-/**
- * Load parameters from file
- */
-template <class T>
-void STWarp<T>::loadParams(fs::path path) {
-    params.loadParams(path);
-}
 
-
-#pragma mark - Template instantiations
 template class STWarp<float>;
 template class STWarp<double>;

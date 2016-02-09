@@ -43,6 +43,8 @@ flags = [
 '-I',
 '/Applications/MATLAB_R2015b.app/extern/include',
 '-I',
+'third_party/googletest/googletest/include',
+'-I',
 './ClangCompleter',
 '-isystem',
 './tests/gmock/gtest',

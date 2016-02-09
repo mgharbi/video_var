@@ -16,8 +16,7 @@
 #include <vector>
 #include <list>
 #include <typeinfo>
-
-#include <boost/filesystem.hpp>
+#include <map>
 
 #include "video/Video.hpp"
 #include "video/VideoProcessing.hpp"
@@ -30,7 +29,6 @@
 // #include "OpticalFlow.h"
 
 
-namespace fs = boost::filesystem;
 typedef multimap<int, pair<int, int> > NeighborhoodType;
 
 using namespace std;
@@ -43,16 +41,13 @@ class STWarp
 {
 public:
     STWarp();
-    STWarp(fs::path outPath);
     virtual ~STWarp();
 
     STWarpParams getParams();
     void setDefaultParams();
     void setParams(STWarpParams params);
-    void loadParams(fs::path path);
 
-    void setVideos(IVideo *A, IVideo *B);
-    // void loadMasks(fs::path pathA, fs::path pathB);
+    void setVideos(const IVideo &A, const IVideo &B);
 
     void setInitialWarpField(WarpingField<T> initial);
 

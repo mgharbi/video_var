@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(MotionComparison)
 
 # No optimization, gdb-friendly, warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -ggdb3")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -14,21 +14,6 @@ message("Compiler flags (debug): ${CMAKE_CXX_FLAGS_DEBUG}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
-# Find external packages
-set(Boost_USE_MULTITHREADED OFF) 
-set(Boost_USE_STATIC_LIBS   OFF)
-
-find_package(Boost COMPONENTS 
-    system 
-    filesystem 
-    unit_test_framework
-    program_options
-    date_time
-    REQUIRED
-)
-find_package(OpenCV REQUIRED)
-# find_package(FFMPEG REQUIRED)
-
 # Directories
 set(src "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(test_dir "${CMAKE_CURRENT_SOURCE_DIR}/test")
@@ -36,6 +21,7 @@ set(bin "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(lib "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 set(inc "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(matlab "${CMAKE_CURRENT_SOURCE_DIR}/matlab")
+set(third_party "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${lib})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${lib})
@@ -49,8 +35,9 @@ include_directories(${inc})
 #                                   Testing                                    #
 ################################################################################
 
-# enable_testing()
-# add_subdirectory(${test_dir})
+set(GTEST_ROOT ${third_party}/googletest/googletest)
+enable_testing()
+add_subdirectory(${test_dir})
 # add_test(NAME testVideo COMMAND testVideo)
 # add_test(NAME testVideoProcessing COMMAND testVideoProcessing)
 # add_test(NAME testSTWarp COMMAND testSTWarp)

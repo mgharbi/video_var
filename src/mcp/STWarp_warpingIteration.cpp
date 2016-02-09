@@ -85,6 +85,5 @@ void STWarp<T>::warpingIteration( const WarpingField<T> &warpField,
     fprintf(stderr, "done.\n");
 }
 
-#pragma mark - Template instantiations
 template class STWarp<float>;
 template class STWarp<double>;

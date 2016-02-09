@@ -23,29 +23,29 @@ void stwarp(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, uns
     // - pass videos
     // - return stwarp
     STWarpParams params;
-    // WarpingField<precision_t> uvw;
-    // STWarp<precision_t> warper = STWarp<precision_t>();
+    WarpingField<precision_t> uvw;
+    STWarp<precision_t> warper = STWarp<precision_t>();
 
-    // warper.setParams(params);
+    warper.setParams(params);
 
-    // IVideo A;
-    // int dA[4];
-    // for (int i = 0; i < 4; ++i) {
-    //     dA[i] = dimsA[i];
-    // }
-    // A.initFromMxArray(4, dA, videoA);
-    //
-    // IVideo B;
-    // int dB[4];
-    // for (int i = 0; i < 4; ++i) {
-    //     dB[i] = dimsB[i];
-    // }
-    // B.initFromMxArray(4, dB, videoB);
+    IVideo A;
+    int dA[4];
+    for (int i = 0; i < 4; ++i) {
+        dA[i] = dimsA[i];
+    }
+    A.initFromMxArray(4, dA, videoA);
 
-    // warper.setVideos(&A,&B);
-    // uvw = warper.computeWarp();
+    IVideo B;
+    int dB[4];
+    for (int i = 0; i < 4; ++i) {
+        dB[i] = dimsB[i];
+    }
+    B.initFromMxArray(4, dB, videoB);
+
+    warper.setVideos(A,B);
+    uvw = warper.computeWarp();
     // uvw.save("test");
-    // uvw.copyToMxArray(dimsA[0]*dimsA[1]*dimsA[2]*dimsA[3],outMatrix);
+    uvw.copyToMxArray(dimsA[0]*dimsA[1]*dimsA[2]*dimsA[3],outMatrix);
     // uvw.exportSpacetimeMap(params.outputPath, name);
 }
 
@@ -94,7 +94,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     cout << "input size: " << dimsA[0] << "x" << dimsA[1] << endl;
     
     /* create the output matrix */
-    plhs[0] = mxCreateNumericArray(4, dimsA, mxUINT8_CLASS, mxREAL);
+    plhs[0] = mxCreateNumericArray(4, dimsA, mxSINGLE_CLASS, mxREAL);
 
     /* get a pointer to the real data in the output matrix */
     outMatrix = (float*)mxGetData(plhs[0]);

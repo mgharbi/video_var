@@ -80,7 +80,6 @@ public:
 };
 
 
-#pragma mark - inlined functions
 
 /**
  * Linearly interpolate in a video volume.

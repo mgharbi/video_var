@@ -670,6 +670,5 @@ void STWarp<T>::weightedLaplacian(const Video<T>& input, const Video<T>& weight,
 
 }
 
-#pragma mark - Template instantiations
 template class STWarp<float>;
 template class STWarp<double>;

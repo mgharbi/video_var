@@ -14,16 +14,12 @@
 
 #include <iostream>
 #include <typeinfo>
-
-#include <opencv2/opencv.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
+#include <cstring>
+#include <vector>
 
 #include "video/VideoExceptions.hpp"
 
 using namespace std;
-using namespace cv;
-namespace fs = boost::filesystem;
 
 /** 
  * Video dimensions.
@@ -44,21 +40,11 @@ class Video
 {
 public:
     Video();
-    Video(fs::path path);
     Video(int height, int width, int nFrames, int nChannels);
     Video(VideoSize s);
     Video(const Video& source);
 
     virtual ~Video();
-
-    virtual void load(fs::path path);
-    void exportFrame(int frame,fs::path path) const;
-    void exportXTslice(int y,fs::path path) const;
-    void exportYTslice(int x,fs::path path) const;
-    void exportScaledFrame(int frame,fs::path path, T min, T max) const;
-    void exportVideo(fs::path path,string name) const;
-    void exportXTvideo(fs::path path,string name) const;
-    void exportYTvideo(fs::path path,string name) const;
 
     void reset(T value = (T) 0);
     Video<T>& operator=(const Video<T>& source);
@@ -121,7 +107,6 @@ protected:
 };
 
 
-#pragma mark - inlined methods
 
 /**
  * Return the video dimensions wrapped in a VideoSize struct.
@@ -249,7 +234,6 @@ T Video<T>::min(int channel) const {
     return m;
 }
 
-#pragma mark - templated methods
 
 /**
  * Check the dimensions of the two videos match.
@@ -353,7 +337,6 @@ void Video<T>::clamp(T min, T max) {
     }
 }
 
-#pragma mark - type aliases
 
 typedef Video<unsigned char> IVideo;
 typedef Video<float> FVideo;

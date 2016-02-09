@@ -1,4 +1,7 @@
-#pragma once
+#ifndef IMAGE_H_KYRVBYNA
+#define IMAGE_H_KYRVBYNA
+
+
 
 #include "project.h"
 #include "stdio.h"
@@ -2838,4 +2841,6 @@ void Image<T>::OutputToMatlab(mxArray *&matrix) const
 
 #endif
 
+
+#endif /* end of include guard: IMAGE_H_KYRVBYNA */
 

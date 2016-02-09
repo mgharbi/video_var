@@ -1,13 +1,8 @@
 #ifndef STWARPPARAMS_HPP_YCEJNHV1
 #define STWARPPARAMS_HPP_YCEJNHV1
 
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/program_options.hpp>
+#include <string>
 
-namespace fs = boost::filesystem;
-namespace po = boost::program_options;
 
 /**
  * Parameters structure for the space-time correspondence algorithm.
@@ -16,7 +11,7 @@ class STWarpParams
 {
 public:
     std::string     name;
-    fs::path        outputPath;
+    std::string     outputPath;
     bool            useColor;
     bool            useFeatures;
     bool            bypassTimeWarp;
@@ -51,7 +46,7 @@ public:
 
     STWarpParams() :
         name("default"),
-        outputPath(fs::system_complete(fs::path("../output"))),
+        outputPath("../output"),
         useColor(false),
         useFeatures(false),
         bypassTimeWarp(false),
@@ -91,11 +86,7 @@ public:
             lambda[i] *= .3;
         }
     }
-    STWarpParams(fs::path path) : STWarpParams() {
-        loadParams(path);
-    }
 
-    void loadParams(fs::path path);
 private:
 };
 

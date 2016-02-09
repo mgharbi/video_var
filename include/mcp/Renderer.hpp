@@ -11,7 +11,7 @@
 #ifndef RENDERER_HPP_NDCYHBTA
 #define RENDERER_HPP_NDCYHBTA
 
-#include <boost/filesystem.hpp>
+#include <algorithm>
 
 #include "video/Video.hpp"
 #include "video/VideoProcessing.hpp"
@@ -19,8 +19,6 @@
 #include "mcp/STWarpParams.hpp"
 #include "mcp/WarpingField.hpp"
 
-
-namespace fs = boost::filesystem;
 
 template <class T>
 class Renderer
