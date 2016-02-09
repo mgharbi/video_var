@@ -1,0 +1,17 @@
+**/*.pyc
+build/*
+bin/*
+output/*
+data
+lib/*
+**/tags
+doc/*
+.DS_Store
+
+!.gitkeep
+*.png
+
+*.mexmaci64
+matlab/utils/ctw/
+*.flo
+*.ppm
