@@ -14,7 +14,7 @@
 
 #include "video/Video.hpp"
 #include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
+// #include <boost/program_options.hpp>
 
 
 /*
@@ -38,17 +38,17 @@ public:
 
     // template <class T2> void copy(const WarpingField<T2>& source);
 
-    void exportSpacetimeMap(fs::path path, string name, int maxAmplitude=-1);
+    // void exportSpacetimeMap(fs::path path, string name, int maxAmplitude=-1);
 
-    void save(fs::path path);
-    void load(fs::path path);
+    // void save(fs::path path);
+    // void load(fs::path path);
 
 protected:
-    vector<vector<int> > colorWheel;
+    // vector<vector<int> > colorWheel;
 
-    void makeColorwheel();
-    void setColors(int r, int g, int b, int k);
-    void computeColor(T u, T v, uchar *pix);
+    // void makeColorwheel();
+    // void setColors(int r, int g, int b, int k);
+    // void computeColor(T u, T v, uchar *pix);
 };
 
 #pragma mark - type aliases

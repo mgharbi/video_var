@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(MotionComparison)
 
 # No optimization, gdb-friendly, warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -ggdb3")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -10,12 +10,13 @@ set(CMAKE_MACOSX_RPATH 0)
 
 message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 message("Compiler flags: ${CMAKE_CXX_FLAGS}")
+message("Compiler flags (debug): ${CMAKE_CXX_FLAGS_DEBUG}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 # Find external packages
 set(Boost_USE_MULTITHREADED OFF) 
-set(Boost_USE_STATIC_LIBS   ON)
+set(Boost_USE_STATIC_LIBS   OFF)
 
 find_package(Boost COMPONENTS 
     system 

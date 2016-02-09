@@ -14,8 +14,4 @@ target_link_libraries( mcp
     video
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
-<<<<<<< HEAD
-=======
-
 include_directories("${inc}")
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc

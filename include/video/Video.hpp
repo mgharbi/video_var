@@ -18,10 +18,6 @@
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-<<<<<<< HEAD:include/video/Video.hpp
-=======
-#include <typeinfo>
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc:include/video/Video.hpp
 
 #include "video/VideoExceptions.hpp"
 

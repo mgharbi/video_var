@@ -25,12 +25,13 @@ STWarp<T>::STWarp(fs::path outPath) {
 template <class T>
 void STWarp<T>::init() {
     setDefaultParams();
-    dimensions = vector<int>(5);
-    videoA = NULL;
-    videoB = NULL;
-    maskA  = NULL;
-    flowA  = NULL;
-    initialWarpField = NULL;
+    dimensions = vector<int>(5,0);
+    videoA = nullptr;
+    videoB = nullptr;
+    maskA  = nullptr;
+    flowA  = nullptr;
+    initialWarpField = nullptr;
+    cout << "init " << endl;
 }
 
 template <class T>
@@ -56,6 +57,7 @@ STWarp<T>::~STWarp() {
         // TODO: check that
         dimensions.clear();
     }
+    cout << "destroy " << endl;
 }
 
 // template <class T>
@@ -526,6 +528,7 @@ void STWarp<T>::setDefaultParams() {
 template <class T>
 void STWarp<T>::setParams(STWarpParams params) {
     this->params = params;
+    cout << "set params" << endl;
 }
 
 /**

@@ -78,7 +78,7 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField, const Video<T> 
     VideoProcessing::edges3D(*videoA,mask,0,nDataChan-1,15);
     int dilateSz[3] = {2, 2, 0};
     VideoProcessing::dilate3D(mask, dilateSz);
-    mask.exportVideo(params.outputPath, "denoiseEdgemap");
+    // mask.exportVideo(params.outputPath, "denoiseEdgemap");
 
     // const T *pOcc              = occ.dataReader();
     const unsigned char *pMask = mask.dataReader();
@@ -173,7 +173,6 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField, const Video<T> 
     }
     fprintf(stderr,"done.\n");
 }
-
 
 #pragma mark - Template instantiations
 template class STWarp<float>;

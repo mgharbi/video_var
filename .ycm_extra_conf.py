@@ -57,19 +57,22 @@ flags = [
 '-isystem',
 '/usr/include'
 '-isystem',
-'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/c++/v1'
+'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/c++/v1',
 '-isystem',
-'/usr/local/include'
+'/usr/local/include',
 '-isystem',
-'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/5.0/include'
+'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/5.0/include',
 '-isystem',
-'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include'
+'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include',
 '-isystem',
-'/usr/include'
+'/usr/include',
 '-isystem',
-'/System/Library/Frameworks (framework directory)'
+'/System/Library/Frameworks (framework directory)',
 '-isystem',
- '/Library/Frameworks (framework directory)'
+ '/Library/Frameworks (framework directory)',
+'-I',
+'/usr/local/MATLAB/R2015b/extern/include/',
+
 ]
  
 if compilation_database_folder:

@@ -12,10 +12,6 @@
 #ifndef VIDEOPROCESSING_HPP_JSKF1JAR
 #define VIDEOPROCESSING_HPP_JSKF1JAR
 
-<<<<<<< HEAD:include/video/VideoProcessing.hpp
-=======
-#include "video/Video.hpp"
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc:include/video/VideoProcessing.hpp
 #include <cmath>
 
 #include "video/Video.hpp"

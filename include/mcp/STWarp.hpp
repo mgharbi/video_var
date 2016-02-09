@@ -12,20 +12,11 @@
 #ifndef STWARP_HPP_QFL971LW
 #define STWARP_HPP_QFL971LW
 
-<<<<<<< HEAD:include/mcp/STWarp.hpp
-=======
-#include "mcp/STWarpParams.hpp"
-#include "mcp/utils.hpp"
-#include "video/Video.hpp"
-#include "video/VideoProcessing.hpp"
-#include "mcp/WarpingField.hpp"
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc:include/mcp/STWarp.hpp
 #include <cmath>
 #include <vector>
 #include <list>
 #include <typeinfo>
 
-<<<<<<< HEAD:include/mcp/STWarp.hpp
 #include <boost/filesystem.hpp>
 
 #include "video/Video.hpp"
@@ -35,8 +26,6 @@
 #include "mcp/WarpingField.hpp"
 #include "mcp/utils.hpp"
 
-=======
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc:include/mcp/STWarp.hpp
 // #include "Image.h"
 // #include "OpticalFlow.h"
 

@@ -8,38 +8,25 @@
  * 
  * ------------------------------------------------------------------------*/
 
-<<<<<<< HEAD
 #include <cstdlib>
 #include <cmath>
-=======
-
-#include "mcp/WarpingField.hpp"
-
-#include <stdlib.h>
-#include <math.h>
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc
-#include <vector>
 #include <fstream>
-#include <typeinfo>
 
 #include "mcp/WarpingField.hpp"
+
 
 
 using namespace std;
 typedef unsigned char uchar;
 
 
-template <class T>
-WarpingField<T>::WarpingField(fs::path path) {
-    load(path);
-}
+// template <class T>
+// WarpingField<T>::WarpingField(fs::path path) {
+//     load(path);
+// }
 
 template <class T>
 WarpingField<T>::~WarpingField() {
-    if( this->pData != NULL ) {
-        delete[] this->pData;
-        this->pData = NULL;
-    }
 }
 
 
@@ -47,29 +34,29 @@ WarpingField<T>::~WarpingField() {
  * Load a .stw warping field binary file.
  * @param[in] path input file path
  */
-template <class T>
-void WarpingField<T>::load(fs::path path) {
-    ifstream file;
-    file.open(path.c_str(),ios::binary | ios::in);
-
-    int type,h,w,nF,nC;
-    file.read((char*)&type,sizeof(int));
-
-    bool isValid = (type == 1 && typeid(T)==typeid(float));
-    isValid = isValid || (type == 2 && typeid(T)==typeid(double));
-    if(isValid){
-        file.read((char*)&(h),sizeof(int));
-        file.read((char*)&(w),sizeof(int));
-        file.read((char*)&(nF),sizeof(int));
-        file.read((char*)&(nC),sizeof(int));
-        this->allocate(h,w,nF,nC);
-        file.read((char*)this->pData,sizeof(T)*this->nElements);
-    }else {
-        fprintf(stderr,"Loading not implemented for this type of data, or incompatible data type.\n");
-    }
-
-    file.close();
-}
+// template <class T>
+// void WarpingField<T>::load(fs::path path) {
+//     ifstream file;
+//     file.open(path.c_str(),ios::binary | ios::in);
+//
+//     int type,h,w,nF,nC;
+//     file.read((char*)&type,sizeof(int));
+//
+//     bool isValid = (type == 1 && typeid(T)==typeid(float));
+//     isValid = isValid || (type == 2 && typeid(T)==typeid(double));
+//     if(isValid){
+//         file.read((char*)&(h),sizeof(int));
+//         file.read((char*)&(w),sizeof(int));
+//         file.read((char*)&(nF),sizeof(int));
+//         file.read((char*)&(nC),sizeof(int));
+//         this->allocate(h,w,nF,nC);
+//         file.read((char*)this->pData,sizeof(T)*this->nElements);
+//     }else {
+//         fprintf(stderr,"Loading not implemented for this type of data, or incompatible data type.\n");
+//     }
+//
+//     file.close();
+// }
 
 /**
  * Save a .stw warping field binary file.

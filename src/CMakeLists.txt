@@ -14,9 +14,3 @@ add_subdirectory("mcp")
 add_subdirectory("video")
 add_subdirectory("mexfiles")
 
-<<<<<<< HEAD
-=======
-# include_directories("${src}/video")
-# include_directories("${src}/mcp")
-# link_directories(${lib})
->>>>>>> 08e370661f7c4bf3290c9d5ccd5d5a000f9f11fc
