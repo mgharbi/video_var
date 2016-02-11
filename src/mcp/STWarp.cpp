@@ -16,7 +16,6 @@ STWarp<T>::STWarp() {
     init();
 }
 
-
 template <class T>
 void STWarp<T>::init() {
     setDefaultParams();
