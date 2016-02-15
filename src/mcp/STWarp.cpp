@@ -22,8 +22,6 @@ void STWarp<T>::init() {
     dimensions = vector<int>(5,0);
     videoA = nullptr;
     videoB = nullptr;
-    maskA  = nullptr;
-    flowA  = nullptr;
     initialWarpField = nullptr;
 }
 
@@ -34,10 +32,6 @@ void STWarp<T>::setInitialWarpField(WarpingField<T> initial) {
 
 template <class T>
 STWarp<T>::~STWarp() {
-    if( flowA != nullptr ){
-        delete flowA;
-        flowA = nullptr;
-    }
     if( videoA != nullptr ){
         delete videoA;
         videoA = nullptr;
@@ -45,10 +39,6 @@ STWarp<T>::~STWarp() {
     if( videoB != nullptr ){
         delete videoB;
         videoB = nullptr;
-    }
-    if( maskA != nullptr ){
-        delete maskA;
-        maskA = nullptr;
     }
     if( initialWarpField != nullptr ){
         delete initialWarpField;
@@ -66,18 +56,20 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
     videoA = new IVideo(A);
     videoB = new IVideo(B);
 
-    // if(videoA->getHeight()!= videoB->getHeight() ||
-    //     videoA->getWidth() != videoB->getWidth() ||
-    //     videoA->frameCount() != videoB->frameCount()){
-    //     fprintf(stderr, "Dimensions do not match\n");
-    // }
+    if(videoA->getHeight()!= videoB->getHeight() ||
+        videoA->getWidth() != videoB->getWidth() ||
+        videoA->frameCount() != videoB->frameCount()){
+        fprintf(stderr, "Dimensions do not match\n");
+    }
 
-    params.useColor = true;
+    params.useColor    = true;
     params.useFeatures = false;
 
     int chan = 3;
+
     // Process only a monochromatic image
     if(!params.useColor) {
+        cout << "+ Processing only black and white" << endl;
         videoA->collapse();
         videoB->collapse();
         chan = 1;
@@ -85,6 +77,7 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
 
     // Use gradient features (requires color)
     if(params.useColor && params.useFeatures) {
+        cout << "+ Adding gradient features" << endl;
         videoA->addChannels(3);
         videoB->addChannels(3);
 
@@ -136,23 +129,7 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
     dimensions[3] = videoB->frameCount();
     dimensions[4] = sz.nChannels;
 
-    occlusion = Video<T>(sz.height, sz.width, sz.nFrames, 1);
-    occlusion.reset(1);
     printf("done.\n");
-}
-
-template <class T>
-void STWarp<T>::thresholdFlow(double thresh) {
-    flowA->collapse();
-    T* fA = flowA->dataWriter();
-    for (int i = 0; i < flowA->elementCount(); ++i) {
-        if(fA[i]<thresh){
-            fA[i] = 0;
-        }else{
-            fA[i] = 255;
-        }
-    }
-
 }
 
 // template <class T>
@@ -233,15 +210,12 @@ template <class T>
 void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
         vector<IVideo*> &pyramidA, 
         vector<IVideo*> &pyramidB,
-        vector<IVideo*> &pyrMaskA,
         vector<WarpingField<T>*> &pyrFlowA
         ) const{
     int n = pyrSizes.size();
     printf("+ Building ST-pyramids with %d levels...",n);
     pyramidA[0] = videoA;
     pyramidB[0] = videoB;
-    // pyrMaskA[0] = maskA;
-    // pyrFlowA[0] = flowA;
     IVideo copy;
     // WarpingField<T> flowCopy;
     for (int i = 1; i < n; ++i) {
@@ -249,18 +223,12 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
                 pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
         pyramidB[i] = new IVideo(pyrSizes[i][0],
                 pyrSizes[i][1],pyrSizes[i][3],dimensions[4]);
-        // pyrMaskA[i] = new IVideo(pyrSizes[i][0],
-        //         pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
-        // pyrFlowA[i] = new WarpingField<T>(pyrSizes[i][0],
-        //         pyrSizes[i][1],pyrSizes[i][2],2);
 
         // Lowpass then downsample
         copy.copy(*pyramidA[i-1]);
         VideoProcessing::resize(copy,pyramidA[i]);
         copy.copy(*pyramidB[i-1]);
         VideoProcessing::resize(copy,pyramidB[i]);
-        // copy.copy(*pyrMaskA[i-1]);
-        // VideoProcessing::resize(copy,pyrMaskA[i]);
 
         // flowCopy.copy(*pyrFlowA[i-1]);
         // VideoProcessing::resize(flowCopy,pyrFlowA[i]);
@@ -305,9 +273,8 @@ WarpingField<T> STWarp<T>::computeWarp() {
     int n = pyrSizes.size();
     vector<IVideo*> pyramidA(n);
     vector<IVideo*> pyramidB(n);
-    vector<IVideo*> pyrMaskA(n);
     vector<WarpingField<T>*> pyrFlowA(n);
-    buildPyramid(pyrSizes,pyramidA,pyramidB,pyrMaskA,pyrFlowA);
+    buildPyramid(pyrSizes,pyramidA,pyramidB,pyrFlowA);
 
     WarpingField<T> warpField;
     if( initialWarpField != nullptr ){
@@ -337,7 +304,6 @@ WarpingField<T> STWarp<T>::computeWarp() {
     for (int i = n-1; i >= 0 ; --i) {
         videoA = pyramidA[i];
         videoB = pyramidB[i];
-        // flowA  = pyrFlowA[i];
 
         // update dimensions
         this->dimensions = videoA->dimensions();
@@ -352,10 +318,6 @@ WarpingField<T> STWarp<T>::computeWarp() {
 
         // Cleanup allocated videos
         if (i != 0) {
-            if(flowA != nullptr) {
-                delete flowA;
-                flowA = nullptr;
-            }
             if( videoA != nullptr ){
                 delete videoA;
                 videoA = nullptr;
@@ -386,9 +348,6 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
 
         WarpingField<T> dWarpField = WarpingField<T>(warpField.size());
 
-        Video<T> newOcc(dimensions[0], dimensions[1], dimensions[2], 1);
-        VideoProcessing::resize(occlusion,&newOcc);
-        occlusion = newOcc;
         warpingIteration(warpField, Bx, By, Bt, C, dWarpField);
 
         if (params.limitUpdate) {
@@ -398,7 +357,7 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
 
         warpField.add(dWarpField);
 
-        denoiseWarpingField(warpField, occlusion);
+        denoiseWarpingField(warpField);
 
     } // end of warp iteration
 }

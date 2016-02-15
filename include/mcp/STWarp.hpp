@@ -25,9 +25,6 @@
 #include "mcp/WarpingField.hpp"
 #include "mcp/utils.hpp"
 
-// #include "Image.h"
-// #include "OpticalFlow.h"
-
 
 typedef multimap<int, pair<int, int> > NeighborhoodType;
 
@@ -56,9 +53,7 @@ public:
     vector<vector<int> > getPyramidSizes() const;
     void buildPyramid(vector<vector<int> > pyrSizes,
                       vector<IVideo*> &pyramidA,
-                      vector<IVideo*> &pyramidB,
-                      vector<IVideo*> &pyrMaskA,
-                      vector<WarpingField<T>*> &pyrFlowA
+                      vector<IVideo*> &pyramidB
                       ) const;
     void resampleWarpingField( WarpingField<T> &warpField, vector<int> dims ) const;
     void computePartialDerivatives( const WarpingField<T> &warpField, 
@@ -76,12 +71,8 @@ public:
     void weightedLaplacian( const Video<T>& input, 
                             const Video<T>& weight, 
                             Video<T>& output);
-    void denoiseWarpingField( WarpingField<T> &warpField, const Video<T> &occlusion );
+    void denoiseWarpingField( WarpingField<T> &warpField);
 
-    // void computeOpticalFlow();
-    void thresholdFlow(double thresh);
-
-    WarpingField<T> *flowA;
     NeighborhoodType neighborhood;
 
     Video<T> occlusion;
@@ -89,7 +80,6 @@ public:
 private:
     IVideo *videoA;
     IVideo *videoB;
-    IVideo *maskA;
     WarpingField<T> *initialWarpField;
 
     vector<int> dimensions;

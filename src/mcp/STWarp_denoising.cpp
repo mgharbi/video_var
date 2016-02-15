@@ -12,7 +12,7 @@
 #include "mcp/STWarp.hpp"
 
 template <class T>
-void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField, const Video<T> &occ ) {
+void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField) {
 
    if( params.medfiltSize <= 0) {
         fprintf(stderr,"    - no median filtering.\n");
@@ -80,7 +80,6 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField, const Video<T> 
     VideoProcessing::dilate3D(mask, dilateSz);
     // mask.exportVideo(params.outputPath, "denoiseEdgemap");
 
-    // const T *pOcc              = occ.dataReader();
     const unsigned char *pMask = mask.dataReader();
     const unsigned char *pA    = videoA->dataReader();
 
@@ -153,7 +152,6 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField, const Video<T> 
 
             weight[w_idx]  = w;
             weight[w_idx] *= w_spacetime[w_idx];
-            // weight[w_idx] *= pOcc[global_idx];
 
             wSum += weight[w_idx];
         }
