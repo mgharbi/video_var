@@ -83,7 +83,7 @@ public:
         lambda[2] = 1; // w spatial reg
         lambda[3] = 1; // w time reg
         for (int i = 0; i < 4; ++i) {
-            lambda[i] *= 50; // .3
+            lambda[i] *= 10; // .3
         }
     }
 
