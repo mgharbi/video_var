@@ -14,16 +14,11 @@ addpath('viz_warp');
 addpath('io');
 addpath('interpolate');
 
-A = load_video('../data/derailleur_01.mov');
-B = load_video('../data/derailleur_02.mov');
-
-
-A = A(120:240,120:240,40:80,:);
-B = B(120:240,120:240,40:80,:);
+A = load_video('../data/rockettes01',true);
+B = load_video('../data/rockettes02',true);
 
 save_video(A,'../output/A.mp4');
 save_video(B,'../output/B.mp4');
-
 
 % Warp
 warp = stwarp(A, B);

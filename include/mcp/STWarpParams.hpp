@@ -48,7 +48,7 @@ public:
         name("default"),
         outputPath("../output"),
         useColor(true),
-        useFeatures(false),
+        useFeatures(true),
         bypassTimeWarp(false),
         autoLevels(true),
         minPyrSize(16),
@@ -68,7 +68,7 @@ public:
         c(1),
         useAdvancedMedian(false),
         useFlow(false),
-        medfiltSize(0), // 5
+        medfiltSize(5), // 5
         gamma(1),
 
         patchSize_space(7),
