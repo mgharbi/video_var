@@ -47,13 +47,13 @@ public:
     STWarpParams() :
         name("default"),
         outputPath("../output"),
-        useColor(false),
+        useColor(true),
         useFeatures(false),
         bypassTimeWarp(false),
         autoLevels(true),
         minPyrSize(16),
         pyrSpacing(1.25),
-        pyrLevels(1),
+        pyrLevels(0),
         warpIterations(3),
         solverIterations(30),
         eps(1e-3),
@@ -66,9 +66,9 @@ public:
         limitUpdate(false),
         debug(false),
         c(1),
-        useAdvancedMedian(true),
-        useFlow(true),
-        medfiltSize(5),
+        useAdvancedMedian(false),
+        useFlow(false),
+        medfiltSize(0), // 5
         gamma(1),
 
         patchSize_space(7),

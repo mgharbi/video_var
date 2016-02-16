@@ -62,18 +62,9 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
         fprintf(stderr, "Dimensions do not match\n");
     }
 
-    params.useColor    = true;
     params.useFeatures = false;
 
     int chan = 3;
-
-    // Process only a monochromatic image
-    if(!params.useColor) {
-        cout << "+ Processing only black and white" << endl;
-        videoA->collapse();
-        videoB->collapse();
-        chan = 1;
-    }
 
     // Use gradient features (requires color)
     if(params.useColor && params.useFeatures) {
@@ -120,7 +111,6 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
         videoB->writeChannel(chan+2, temp);
     }
 
-
     // TODO: nullptr
     VideoSize sz  = videoA->size();
     dimensions[0] = sz.height;
@@ -132,116 +122,54 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
     printf("done.\n");
 }
 
-// template <class T>
-// void STWarp<T>::computeOpticalFlow() {
-//     printf("+ Computing optical flow\n");
-//     VideoSize s = videoA->size();
-//     flowA = new WarpingField<T>(s.height, s.width, s.nFrames,2);
-//
-//     int nChannels = s.nChannels;
-//     if(params.useFeatures) {
-//         nChannels -= 3;
-//     }
-//
-//     DImage im1(s.width,s.height,nChannels);
-//     DImage im2(s.width,s.height,nChannels);
-//
-//     T *pOF = nullptr; 
-//     const unsigned char *pVideo = nullptr;
-//     int start_frame = 0;
-//     int end_frame = videoA->frameCount()-1;
-//     int frame_step = 1;
-//     for(int pass = 0; pass < 1; ++pass) {
-//         pOF    = flowA->dataWriter();
-//         pVideo = videoA->dataReader();
-//         // if(pass == 1) {
-//         //     start_frame = videoA->frameCount()-1;
-//         //     end_frame = 0;
-//         //     frame_step = -1;
-//         //     pOF    = flowB->dataWriter();
-//         // }
-//         
-//         // Extract pair of frames
-//         double *p1 = im1.data();
-//         double *p2 = im2.data();
-//         for (int frame = start_frame; frame != end_frame ; frame += frame_step) {
-//             printf("\r\t%d - %03d/%03d",pass+1,frame+1,videoA->frameCount()-1);
-//             fflush(stdout);
-//             int indexV = 0, indexI = 0;
-//             for (int k = 0; k < nChannels; ++k)
-//                 for (int j = 0; j < s.width; ++j)
-//                     for (int i = 0; i < s.height; ++i)
-//                     {
-//                         indexV = i+s.height*(j+ s.width*(frame+s.nFrames*k));
-//                         indexI = (i*s.width+j)*nChannels + k;
-//                         p1[indexI] = pVideo[indexV];
-//
-//                         indexV += frame_step*s.height*s.width;
-//                         p2[indexI] = pVideo[indexV];
-//                     }
-//
-//             double alpha           = params.lambda[0];
-//             double ratio           = 1/params.pyrSpacing;
-//             int minWidth           = params.minPyrSize;
-//             int nOuterFPIterations = params.warpIterations;
-//             int nInnerFPIterations = 1;
-//             int nSORIterations     = params.solverIterations;
-//             DImage vx,vy,warpI2;
-//             // OpticalFlow::Coarse2FineFlow(vx,vy,warpI2,im1,im2,
-//             //         alpha,ratio,minWidth,
-//             //         nOuterFPIterations,nInnerFPIterations,nSORIterations);
-//
-//             for (int j = 0; j < s.width; ++j)
-//                 for (int i = 0; i < s.height; ++i)
-//                 {
-//                     indexV      = i+s.height*(j+ s.width*frame);
-//                     indexI      = i*s.width+j;
-//                     pOF[indexV] = (T) vx[indexI];
-//
-//                     indexV += s.height*s.width*+s.nFrames;
-//                     pOF[indexV] = (T) vy[indexI];
-//                 }
-//         }
-//     }
-//     printf("\n");
-// }
-
 template <class T>
 void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
         vector<IVideo*> &pyramidA, 
-        vector<IVideo*> &pyramidB,
-        vector<WarpingField<T>*> &pyrFlowA
+        vector<IVideo*> &pyramidB
         ) const{
     int n = pyrSizes.size();
     printf("+ Building ST-pyramids with %d levels...",n);
     pyramidA[0] = videoA;
     pyramidB[0] = videoB;
     IVideo copy;
-    // WarpingField<T> flowCopy;
     for (int i = 1; i < n; ++i) {
-        pyramidA[i] = new IVideo(pyrSizes[i][0],
-                pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
-        pyramidB[i] = new IVideo(pyrSizes[i][0],
-                pyrSizes[i][1],pyrSizes[i][3],dimensions[4]);
+        pyramidA[i] = 
+            new IVideo(pyrSizes[i][0],
+            pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
+        pyramidB[i] = 
+            new IVideo(pyrSizes[i][0],
+            pyrSizes[i][1],pyrSizes[i][3],dimensions[4]);
 
-        // Lowpass then downsample
+        // Lowpass and downsample
         copy.copy(*pyramidA[i-1]);
         VideoProcessing::resize(copy,pyramidA[i]);
         copy.copy(*pyramidB[i-1]);
         VideoProcessing::resize(copy,pyramidB[i]);
-
-        // flowCopy.copy(*pyrFlowA[i-1]);
-        // VideoProcessing::resize(flowCopy,pyrFlowA[i]);
-
-        // Rescale optical flow
-        // vector<int> oldDim = pyrFlowA[i-1]->dimensions();
-        // vector<int> newDim = pyrFlowA[i]->dimensions();
-        // for (int d = 0; d < 2; ++d) {
-        //     T ratio = ( (T) newDim[d] )/oldDim[d];
-        //     pyrFlowA[i]->scalarMultiplyChannel(ratio,d);
-        // }
     }
     printf("done.\n");
+}
+
+template <class T>
+void STWarp<T>::initializeWarpField(const vector<int> &dimensions,
+        WarpingField<T> &warpField) 
+{
+    printf("+ Generating initial warp field\n");
+    warpField = WarpingField<T>(dimensions[0], dimensions[1], 
+            dimensions[2], 3);
+
+    // Initialize the time map to be a ramp
+    T* pW = warpField.dataWriter();
+    int nFramesA = videoA->frameCount();
+    int nFramesB = videoB->frameCount();
+    int nVoxels  = videoA->voxelCount();
+    double ratio = ((double) nFramesB - 1) / ((double) nFramesA - 1);
+    for(int k = 0; k<dimensions[2];++k)
+        for(int j = 0; j<dimensions[1];++j)
+            for(int i = 0; i<dimensions[0];++i)
+    {
+        int index = i + dimensions[0]*( j + dimensions[1]*k );
+        pW[index + 2*nVoxels] = (T) ratio*k - k;
+    }
 }
 
 template <class T>
@@ -253,55 +181,35 @@ WarpingField<T> STWarp<T>::computeWarp() {
             dimensions[2],
             videoA->channelCount());
 
-
     if(typeid(T)==typeid(float)) {
         printf("+ Single-precision computation\n");
     } else{
         printf("+ Double-precision computation\n");
     }
+
     if(params.bypassTimeWarp){
         printf("+ By-passing timewarp map\n");
     }
-    printf("+ Lambda [%5f,%5f,%5f,%5f]\n",
+
+    printf("+ Regularizing lambda [%5f,%5f,%5f,%5f]\n",
             params.lambda[0],
             params.lambda[1],
             params.lambda[2],
             params.lambda[3]);
     
-    // Build Pyramids
+    // Get dimensions of the pyramid levels
     vector<vector<int> > pyrSizes = getPyramidSizes();
-    int n = pyrSizes.size();
-    vector<IVideo*> pyramidA(n);
-    vector<IVideo*> pyramidB(n);
-    vector<WarpingField<T>*> pyrFlowA(n);
-    buildPyramid(pyrSizes,pyramidA,pyramidB,pyrFlowA);
+    int nLevels = pyrSizes.size();
+
+    // Build Pyramids
+    vector<IVideo*> pyramidA(nLevels);
+    vector<IVideo*> pyramidB(nLevels);
+    buildPyramid(pyrSizes,pyramidA,pyramidB);
 
     WarpingField<T> warpField;
-    if( initialWarpField != nullptr ){
-        printf("+ Using init field\n");
-        warpField = *initialWarpField;
-        // warpField.scalarMultiplyChannel(0, 0);
-        // warpField.scalarMultiplyChannel(0, 1);
-    }else {
-        printf("+ Generating init field\n");
-        warpField = WarpingField<T>(dimensions[0], dimensions[1], 
-                dimensions[2], 3);
-        // Initialize the time map to be a ramp
-        T* pW = warpField.dataWriter();
-        int nFramesA = videoA->frameCount();
-        int nFramesB = videoB->frameCount();
-        int nVoxels = videoA->voxelCount();
-        double ratio = ((double) nFramesB - 1) / ((double) nFramesA - 1);
-        for(int k = 0; k<dimensions[2];++k)
-            for(int j = 0; j<dimensions[1];++j)
-                for(int i = 0; i<dimensions[0];++i)
-        {
-            int index = i + dimensions[0]*( j + dimensions[1]*k );
-            pW[index + 2*nVoxels] = (T) ratio*k - k;
-        }
-    }
+    initializeWarpField(dimensions, warpField);
 
-    for (int i = n-1; i >= 0 ; --i) {
+    for (int i = nLevels-1; i >= 0 ; --i) {
         videoA = pyramidA[i];
         videoB = pyramidB[i];
 
@@ -338,23 +246,25 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
         printf("  - warp iteration %02d\n",warpIter+1);
 
         // Get derivatives
-        fprintf(stderr, "    - computing derivatives...");
+        printf("    - computing derivatives...");
         Video<T> Bx(videoB->size());
         Video<T> By(videoB->size());
         Video<T> Bt(videoB->size());
         Video<T> C(videoB->size());
         computePartialDerivatives(warpField,Bx,By,Bt,C);
-        fprintf(stderr, "done.\n");
+        printf("done.\n");
 
+        // marginal warpField update
         WarpingField<T> dWarpField = WarpingField<T>(warpField.size());
 
         warpingIteration(warpField, Bx, By, Bt, C, dWarpField);
 
         if (params.limitUpdate) {
-            fprintf(stderr, "    - limit update");
+            printf("    - limiting warp update to [-1,1]");
             dWarpField.clamp(-1,1);
         }
 
+        // w <- w + dw
         warpField.add(dWarpField);
 
         denoiseWarpingField(warpField);
