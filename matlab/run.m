@@ -1,38 +1,23 @@
 % -------------------------------------------------------------------
 % File:    run.m
 % Author:  Michael Gharbi <gharbi@mit.edu>
-% Created: 2016-02-02
+% Created: 2016-02-16
 % -------------------------------------------------------------------
 % 
 % 
 % 
 % ------------------------------------------------------------------#
 
+globals = init();
 
-addpath('../lib/mex');
-addpath('viz_warp');
-addpath('io');
-addpath('interpolate');
+% video = load_video('../data/rockettes01');
+video = randn(20,30,10,3);
 
-A = load_video('../data/rockettes01',true);
-B = load_video('../data/rockettes02',true);
+params.n_outer_iterations  = 1;
+params.n_inner_iterations  = 1;
+params.patch_size_spatial  = 15;
+params.patch_size_temporal = 5;
+params.nn_count            = 10;
 
-save_video(A,'../output/A.mp4');
-save_video(B,'../output/B.mp4');
+res = nlvv(video,params);
 
-% Warp
-warp = stwarp(A, B);
-
-% Visualization
-[spatial,temporal] = viz_warp(warp);
-save_video(spatial,'../output/spatial.mp4');
-save_video(temporal,'../output/temporal.mp4');
-
-Bwarped = backward_interpolate(B,warp);
-save_video(Bwarped,'../output/B_warped.mp4');
-
-fused = make_overlay(A,B);
-save_video(fused,'../output/overlay.mp4');
-
-fused = make_overlay(A,Bwarped);
-save_video(fused,'../output/overlay_warped.mp4');

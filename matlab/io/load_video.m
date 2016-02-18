@@ -1,9 +1,8 @@
-function video = load_video(path, fromImages)
-    if nargin < 2
-        fromImages = false;
-    end
+function video = load_video(path)
+    [basedir,file,ext] = fileparts(path);
+    fromImages = false;
 
-    if fromImages
+    if strcmp(ext,'')
         files = dir(fullfile(path,'*.png'));
         nFrames = length(files);
         if nFrames == 0
@@ -17,6 +16,9 @@ function video = load_video(path, fromImages)
             frame = imread(fullfile(path, names{f}));
             video(:,:,f,:) = frame;
         end
+    else if strcmp(ext,'.mat')
+        video = load(path);
+        video = video.video;
     else
         v = VideoReader(path);
         video = zeros(v.Height,v.Width,v.NumberOfFrames,3,'uint8');

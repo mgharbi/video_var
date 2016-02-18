@@ -91,14 +91,20 @@ ann = [];
 parfor_progress(NumIterOuter);
 for i = 1:NumIterOuter
     [img_regular,ann] = UpdateImage(img_warped, img_regular, img_regular, PatchSize, NumIterInner, NumNN, lambda, ann);
+
     [ux,uy] = Coarse2FineTwoFramesFinal(img_regular,img,para, ux, uy, 1e-3,1e-6);
+
+    % Set flow to be 0 at the boundary
     ux(1,:) = 0; uy(1,:) = 0;
     ux(end,:) = 0; uy(end,:) = 0;
     ux(:,1) = 0; uy(:,1) = 0;
     ux(:,end) = 0; uy(:,end) = 0;
+
+    % Avoid warping inversion (Jacobian determinant)
     [ux, uy] = FlowConsistency2(ux, uy, 50);
     
     [img_warped,mask] = warpImage(img, ux, uy);
+
     if(i> 1 & sqrt(mean((img_warped_prev(:)-img_warped(:)).^2)) < 1e-5)
         break;
     else

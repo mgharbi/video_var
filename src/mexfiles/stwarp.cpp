@@ -57,22 +57,32 @@ void mexFunction( int nlhs, mxArray *plhs[],
     unsigned char *videoB;      
     float *outMatrix;  
 
+    // - Checks ------------------------------------------------------------------------------
+
     /* check for proper number of arguments */
-    if(nrhs!=2) {
-        mexErrMsgIdAndTxt("MotionComparison:stwarp:nrhs","Two inputs required.");
+    if(nrhs!=3) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:nrhs","Three inputs required.");
     }
     if(nlhs!=1) {
         mexErrMsgIdAndTxt("MotionComparison:stwarp:nlhs","One output required.");
     }
     
-    /* make sure the first input argument is type float */
+    /* make sure the first input argument is type uint8 */
     if( !mxIsClass(prhs[0], "uint8") || mxIsComplex(prhs[0])) {
         mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type uint8.");
     }
 
+    /* make sure the second input argument is type uint8 */
     if( !mxIsClass(prhs[1], "uint8") || mxIsComplex(prhs[1])) {
         mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type uint8.");
     }
+
+    /* make sure the third input argument is the param struct */
+    if( !mxIsStruct(prhs[2]) ) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:notStruct","Input should be a struct.");
+    }
+
+    // - Inputs ------------------------------------------------------------------------------
     
     /* create a pointer to the real data in the input matrix  */
     videoA = (unsigned char*)mxGetData(prhs[0]);
@@ -91,7 +101,25 @@ void mexFunction( int nlhs, mxArray *plhs[],
             mexErrMsgIdAndTxt("MotionComparison:stwarp:sizeMismatch","Inputs must have the same spatial dimensions");
         }
     }
-    cout << "input size: " << dimsA[0] << "x" << dimsA[1] << endl;
+
+    // parse params
+    int nfields = mxGetNumberOfFields(prhs[2]);
+
+    if(mxGetNumberOfElements(prhs[2]) != 1) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:wrongNumberOfStructElem","Param struct must have one element");
+    }
+
+    for (int i = 0; i < nfields; ++i)
+    {
+        mxArray *current = mxGetFieldByNumber(prhs[2],0,i);
+        const char* field_name = mxGetFieldNameByNumber(prhs[2],i);
+        if(current == nullptr) {
+            cout << i << " is empty field" << endl;
+        }
+        cout << "field " << field_name << endl;
+    }
+
+    // - Outputs -----------------------------------------------------------------------------
     
     /* create the output matrix */
     plhs[0] = mxCreateNumericArray(4, dimsA, mxSINGLE_CLASS, mxREAL);
@@ -99,6 +127,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
     /* get a pointer to the real data in the output matrix */
     outMatrix = (float*)mxGetData(plhs[0]);
 
+    // ---------------------------------------------------------------------------------------
+
     /* call the computational routine */
-    stwarp(dimsA, dimsB, videoA, videoB, outMatrix);
+    // stwarp(dimsA, dimsB, videoA, videoB, outMatrix);
 }
