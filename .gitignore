@@ -16,3 +16,4 @@ matlab/utils/ctw/
 *.flo
 *.ppm
 third_party/
+patchmatch-2.1

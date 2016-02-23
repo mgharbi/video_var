@@ -1,0 +1,4 @@
+globals = init();
+
+run(KNNfieldTest);
+

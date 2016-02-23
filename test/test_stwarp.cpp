@@ -29,7 +29,7 @@ TEST_F(STWarpTest, zero_warp_field) {
     ASSERT_EQ(uvw.channelCount(), 3);
 
     for (int i = 0; i < 10; ++i)
-    for (int j = 0; i < 20; ++i)
+    for (int j = 0; j < 20; ++j)
     for (int k = 0; k < 30; ++k)
     {
 

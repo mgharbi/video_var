@@ -1,5 +1,6 @@
 set(libmcp_src 
     STWarp.cpp
+    NNField.cpp
     STWarpParams.cpp
     Renderer.cpp
     STWarp_warpingIterationAux.cpp

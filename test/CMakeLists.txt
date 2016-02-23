@@ -5,6 +5,7 @@ set(test_bin ${bin}/test)
 set(all_tests
     video
     stwarp
+    nnfield
 )
 
 foreach(t ${all_tests})
