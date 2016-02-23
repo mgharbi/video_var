@@ -1,6 +1,5 @@
 set(libvideo_src 
     Video.cpp
-    VideoProcessing.cpp
 )
 
 include_directories(${inc})

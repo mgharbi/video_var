@@ -21,7 +21,7 @@ function globals = init()
 
     % Add to matlab path
     addpath('../lib/mex');
-    addpath('viz_warp');
+    addpath('viz');
     addpath('io');
     addpath('interpolate');
     addpath('nlvv');
