@@ -101,10 +101,11 @@ function test3DNNF(testCase)
     [h,w,c,nF] = size(video);
 
     params = knnf_params();
-    params.propagation_iterations = 3;
+    params.propagation_iterations = 1;
     params.patch_size_space       = 5;
     params.patch_size_time        = 5;
     params.knn                    = 1;
+    params.threads                = 16;
 
     tic;
     nnf                           = knnfield(video, db, params);

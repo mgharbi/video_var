@@ -134,11 +134,11 @@ Video<int> NNField::compute() {
                 int ithread = omp_get_thread_num();
                 // Split the 3d volume along the t-axis
                 if(nF_valid > omp_get_num_threads() ) {
-                    int tile_nf = nF_valid / omp_get_num_threads();
+                    int tile_nf = ceil(1.0*nF_valid / omp_get_num_threads());
                     tmin = ithread*tile_nf;
                     tmax = min((ithread+1)*tile_nf,nF_valid);
-                }else {
-                    int tile_w = w_valid / omp_get_num_threads();
+                }else { // or x, if t is too small
+                    int tile_w = ceil(1.0*w_valid / omp_get_num_threads());
                     xmin = ithread*tile_w;
                     xmax = min((ithread+1)*tile_w,w_valid);
                 }
@@ -156,6 +156,7 @@ Video<int> NNField::compute() {
 
 
             // Loop through all patches in the video
+            if (tmin < nF_valid && xmin < w_valid && ymin < h_valid) // exclude threads out of bound
             for (int y = ystart; y != yend; y += ychange) 
             for (int t = tstart; t != tend; t += tchange) 
             for (int x = xstart; x != xend; x += xchange) 
@@ -181,42 +182,48 @@ Video<int> NNField::compute() {
                 // Propagate x
                 if ( x - xchange > -1 && x - xchange <  w_valid) {
                     int index_prev = index - h*xchange;
-                    int x_p = pNNF[index_prev + 0*nVoxels] + xchange;
-                    int y_p = pNNF[index_prev + 1*nVoxels];
-                    int t_p = pNNF[index_prev + 2*nVoxels];
-                    if ( x_p> -1 && x_p <  w_db_valid) {
-                        improve_knn(*video_,*database_,y, x, t,
-                                current_best,
-                                all_matches,
-                                y_p, x_p, t_p);
+                    for (int k = 0; k < params_.knn; ++k) { // get k next neighbors
+                        int x_p = pNNF[index_prev + 0*nVoxels + k*nn_offset_] + xchange;
+                        int y_p = pNNF[index_prev + 1*nVoxels + k*nn_offset_];
+                        int t_p = pNNF[index_prev + 2*nVoxels + k*nn_offset_];
+                        if ( x_p> -1 && x_p <  w_db_valid) {
+                            improve_knn(*video_,*database_,y, x, t,
+                                    current_best,
+                                    all_matches,
+                                    y_p, x_p, t_p);
+                        }
                     }
                 }
 
                 // Propagate y
                 if ( y - ychange > -1 && y - ychange <  h_valid) {
                     int index_prev = index - ychange;
-                    int x_p = pNNF[index_prev + 0*nVoxels];
-                    int y_p = pNNF[index_prev + 1*nVoxels] + ychange;
-                    int t_p = pNNF[index_prev + 2*nVoxels];
-                    if ( y_p> -1 && y_p <  h_db_valid) {
-                        improve_knn(*video_,*database_,y, x, t,
-                                current_best,
-                                all_matches,
-                                y_p, x_p, t_p);
+                    for (int k = 0; k < params_.knn; ++k) { // get k next neighbors
+                        int x_p = pNNF[index_prev + 0*nVoxels + k*nn_offset_];
+                        int y_p = pNNF[index_prev + 1*nVoxels + k*nn_offset_] + ychange;
+                        int t_p = pNNF[index_prev + 2*nVoxels + k*nn_offset_];
+                        if ( y_p> -1 && y_p <  h_db_valid) {
+                            improve_knn(*video_,*database_,y, x, t,
+                                    current_best,
+                                    all_matches,
+                                    y_p, x_p, t_p);
+                        }
                     }
                 }
 
                 // Propagate t
                 if ( t - tchange > -1 && t - tchange <  nF_valid) {
                     int index_prev = index - tchange*h*w;
-                    int x_p = pNNF[index_prev + 0*nVoxels];
-                    int y_p = pNNF[index_prev + 1*nVoxels];
-                    int t_p = pNNF[index_prev + 2*nVoxels] + tchange;
-                    if ( t_p> -1 && t_p <  nF_db_valid) {
-                        improve_knn(*video_,*database_,y, x, t,
-                                current_best,
-                                all_matches,
-                                y_p, x_p, t_p);
+                    for (int k = 0; k < params_.knn; ++k) { // get k next neighbors
+                        int x_p = pNNF[index_prev + 0*nVoxels + k*nn_offset_];
+                        int y_p = pNNF[index_prev + 1*nVoxels + k*nn_offset_];
+                        int t_p = pNNF[index_prev + 2*nVoxels + k*nn_offset_] + tchange;
+                        if ( t_p> -1 && t_p <  nF_db_valid) {
+                            improve_knn(*video_,*database_,y, x, t,
+                                    current_best,
+                                    all_matches,
+                                    y_p, x_p, t_p);
+                        }
                     }
                 }
 
@@ -273,13 +280,14 @@ Video<int> NNField::compute() {
 
         } // parallel 
 
+        // Display matching cost
         float* pCost = nnf_dist.dataWriter();
         vector<float> avg_cost(params_.knn);
         for (int k = 0; k < params_.knn; ++k)
-            for (int i = 0; i < nVoxels; ++i)
-            {
-                avg_cost[k] += pCost[i+k*nVoxels];
-            }
+        for (int i = 0; i < nVoxels; ++i)
+        {
+            avg_cost[k] += pCost[i+k*nVoxels];
+        }
         for (int k = 0; k < params_.knn; ++k)
         {
             avg_cost[k] /= nVoxels;
