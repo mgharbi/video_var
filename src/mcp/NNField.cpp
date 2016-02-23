@@ -296,7 +296,5 @@ Video<int> NNField::compute() {
 
     } // propagation iteration
 
-
-
     return nnf;
 }
