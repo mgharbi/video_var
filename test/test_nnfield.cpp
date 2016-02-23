@@ -29,6 +29,7 @@ TEST_F(NNFieldTest, zero_warp_field) {
     NNField field(&A, &B, params);
     Video<int> nnf = field.compute();
 
+    // Check the first match is exact
     for (int i = 0; i < 10-params.patch_size_space; ++i)
     for (int j = 0; j < 20-params.patch_size_space; ++j)
     for (int k = 0; k < 30-params.patch_size_time; ++k)
@@ -38,21 +39,6 @@ TEST_F(NNFieldTest, zero_warp_field) {
         ASSERT_EQ(nnf.at(i,j,k,1), i);
         ASSERT_EQ(nnf.at(i,j,k,2), k);
 
-        // bool is_different = false;
-        // is_different = is_different || (nnf.at(i,j,k,3) != nnf.at(i,j,k,0));
-        // is_different = is_different || (nnf.at(i,j,k,4) != nnf.at(i,j,k,1));
-        // is_different = is_different || (nnf.at(i,j,k,5) != nnf.at(i,j,k,2));
-
-        // if(!is_different) {
-        //     cout << nnf.at(i,j,k,0) << endl;
-        //     cout << nnf.at(i,j,k,1) << endl;
-        //     cout << nnf.at(i,j,k,2) << endl;
-        //     cout << nnf.at(i,j,k,3) << endl;
-        //     cout << nnf.at(i,j,k,4) << endl;
-        //     cout << nnf.at(i,j,k,5) << endl;
-        // }
-        //
-        // ASSERT_TRUE(is_different);
     }
 
 }

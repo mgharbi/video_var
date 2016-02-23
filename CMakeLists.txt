@@ -4,15 +4,27 @@ project(MotionComparison)
 # No optimization, gdb-friendly, warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fPIC -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -ggdb3")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
+# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_MACOSX_RPATH 0)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
+
+find_package(OpenMP)
+if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
 message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 message("Compiler flags: ${CMAKE_CXX_FLAGS}")
-message("Compiler flags (debug): ${CMAKE_CXX_FLAGS_DEBUG}")
+if(${CMAKE_BUILD_TYPE} STREQUAL RELEASE)
+    message("Compiler flags (release): ${CMAKE_CXX_FLAGS_RELEASE}")
+else()
+    message("Compiler flags (debug): ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 # Directories
 set(src "${CMAKE_CURRENT_SOURCE_DIR}/src")

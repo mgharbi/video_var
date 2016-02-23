@@ -7,7 +7,7 @@ function globals = init()
     globals.path.root        = root;
     globals.path.data        = fullfile(globals.path.root,'data');
     globals.path.output      = fullfile(globals.path.root,'output');
-    globals.path.test        = fullfile(globals.path.root,'test');
+    globals.path.test        = fullfile(globals.path.root,'matlab', 'test');
     globals.path.test_data   = fullfile(globals.path.test,'test_data');
     globals.path.test_output = fullfile(globals.path.output,'test_output');
 
@@ -26,4 +26,5 @@ function globals = init()
     addpath('interpolate');
     addpath('nlvv');
     addpath('test');
+    addpath('params');
 end % init

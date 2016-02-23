@@ -79,7 +79,7 @@ Video<int> NNField::compute() {
 
     Video<int> nnf(h, w,  nF, 3*params_.knn);
     Video<float> nnf_dist(h, w,  nF, params_.knn);
-
+    
     // write-pointers 
     int* pNNF    = nnf.dataWriter();
     float* pCost = nnf_dist.dataWriter();
@@ -89,22 +89,24 @@ Video<int> NNField::compute() {
     // init
     printf("+ NNF initialization with size %dx%dx%d, ",h,w,nF);
     printf("patch size %dx%d\n",params_.patch_size_space,params_.patch_size_time);
-    for (int t = 0; t < nF - params_.patch_size_time  + 1; ++t) 
-    for (int x = 0; x < w  - params_.patch_size_space + 1; ++x) 
+    #pragma omp parallel for
     for (int y = 0; y < h  - params_.patch_size_space + 1; ++y) 
     {
-        int index = y + h*(x + w*t);
-        for (int k = 0 ; k < params_.knn; ++ k) {
-            int t_db               = rand() % nF_eff;
-            int x_db               = rand() % w_eff;
-            int y_db               = rand() % h_eff;
-            pNNF[index + 0*nVoxels + k*nn_offset_] = x_db;
-            pNNF[index + 1*nVoxels + k*nn_offset_] = y_db;
-            pNNF[index + 2*nVoxels + k*nn_offset_] = t_db;
-            pCost[index + k*nn_offset_] = getPatchCost(*video_, *database_, y,x,t,y_db,x_db,t_db);
-        }
-    }
-    return nnf;
+        for (int t = 0; t < nF - params_.patch_size_time  + 1; ++t) 
+        for (int x = 0; x < w  - params_.patch_size_space + 1; ++x)
+        {
+            int index = y + h*(x + w*t);
+            for (int k = 0 ; k < params_.knn; ++ k) {
+                int t_db               = rand() % nF_eff;
+                int x_db               = rand() % w_eff;
+                int y_db               = rand() % h_eff;
+                pNNF[index + 0*nVoxels + k*nn_offset_] = x_db;
+                pNNF[index + 1*nVoxels + k*nn_offset_] = y_db;
+                pNNF[index + 2*nVoxels + k*nn_offset_] = t_db;
+                pCost[index + k*nVoxels] = getPatchCost(*video_, *database_, y,x,t,y_db,x_db,t_db);
+            }
+        } // x,t loop
+    } // y loop
 
 
     for (int iter = 0; iter < params_.propagation_iterations; ++iter) {
@@ -121,9 +123,9 @@ Video<int> NNField::compute() {
         }
 
         // Loop through all patches in the video
+        for (int y = ystart; y != yend; y += ychange) 
         for (int t = tstart; t != tend; t += tchange) 
         for (int x = xstart; x != xend; x += xchange) 
-        for (int y = ystart; y != yend; y += ychange) 
         { 
             int index = y + h*(x+w*t);
 
@@ -135,7 +137,7 @@ Video<int> NNField::compute() {
                 int x_best    = pNNF[index + 0*nVoxels + k*nn_offset_];
                 int y_best    = pNNF[index + 1*nVoxels + k*nn_offset_];
                 int t_best    = pNNF[index + 2*nVoxels + k*nn_offset_];
-                float best_cost = pCost[index + k*nn_offset_];
+                float best_cost = pCost[index + k*nVoxels];
                 current_best.push_back(Match(best_cost, x_best,y_best,t_best));
                 all_matches.emplace(PatchCoord(x_best,y_best,t_best),true);
             }
@@ -232,18 +234,22 @@ Video<int> NNField::compute() {
                 pNNF[index + 0*nVoxels + k*nn_offset_] = std::get<1>(current_best[k]);
                 pNNF[index + 1*nVoxels + k*nn_offset_] = std::get<2>(current_best[k]);
                 pNNF[index + 2*nVoxels + k*nn_offset_] = std::get<3>(current_best[k]);
-                pCost[index + k*nn_offset_] = std::get<0>(current_best[k]);
+                pCost[index + k*nVoxels] = std::get<0>(current_best[k]);
             }
 
         } // patches loop
 
-        float avg_cost = 0;
+        vector<float> avg_cost(params_.knn);
+        for (int k = 0; k < params_.knn; ++k)
         for (int i = 0; i < nVoxels; ++i)
         {
-            avg_cost += pCost[i];
+            avg_cost[k] += pCost[i+k*nVoxels];
         }
-        avg_cost /= nVoxels;
-        cout << "avg cost " << avg_cost << endl;;
+        for (int k = 0; k < params_.knn; ++k)
+        {
+            avg_cost[k] /= nVoxels;
+            cout << "    match cost [" << k << "] : " << avg_cost[k] << endl;;
+        }
 
     } // propagation iteration
 
