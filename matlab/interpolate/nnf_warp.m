@@ -16,12 +16,10 @@ function output = backward_warp(B,sizeA, w)
         [X,Y,Z] = meshgrid(1:sizeA(2), 1:sizeA(1), 1:sizeA(3));
 
         % Coordinates to sample from
-        Xb = w(:,:,:,1)+1;
-        Yb = w(:,:,:,2)+1;
-        Zb = w(:,:,:,3)+1;
+        Xb = single(w(:,:,:,1)+1);
+        Yb = single(w(:,:,:,2)+1);
+        Zb = single(w(:,:,:,3)+1);
 
-        'b1'
-        size(B(:,:,:,1))
 
         out1 = interp3(X,Y,Z,single(B(:,:,:,1)),Xb,Yb,Zb);
         out2 = interp3(X,Y,Z,single(B(:,:,:,2)),Xb,Yb,Zb);

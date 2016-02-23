@@ -91,3 +91,31 @@ function test2DNNF(testCase)
     save_video(spatial,fullfile(globals.path.test_output, 'test2DNNF_spatial'), true);
     save_video(temporal,fullfile(globals.path.test_output, 'test2DNNF_temporal'), true);
 end
+
+function test3DNNF(testCase)
+    globals = testCase.TestData.globals;
+
+    video = load_video(fullfile(globals.path.test_data,'rockettes01_video'));
+    db    = load_video(fullfile(globals.path.test_data,'rockettes02_video'));
+
+    [h,w,c,nF] = size(video);
+
+    params = knnf_params();
+    params.propagation_iterations = 3;
+    params.patch_size_space       = 5;
+    params.patch_size_time        = 5;
+    params.knn                    = 1;
+
+    tic;
+    nnf                           = knnfield(video, db, params);
+    toc
+
+    for i = 1:params.knn
+        warped = nnf_warp(db, size(video),nnf(:,:,:,3*(i-1)+1:3*i));
+        save_video(warped, fullfile(globals.path.test_output, sprintf('test3DNNF_warped_%d', i)), true);
+    end
+
+    [spatial,temporal] = viz_warp(single(nnf(:,:,:,1:3)));
+    save_video(spatial,fullfile(globals.path.test_output, 'test3DNNF_spatial'), true);
+    save_video(temporal,fullfile(globals.path.test_output, 'test3DNNF_temporal'), true);
+end

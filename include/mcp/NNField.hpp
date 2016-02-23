@@ -9,15 +9,18 @@
 #include "video/Video.hpp"
 
 typedef struct NNFieldParams {
-    NNFieldParams(int it = 1, int psz_space = 5, int psz_time = 5, int knn = 1) 
+    NNFieldParams(int it = 1, int psz_space = 5, int psz_time = 5, int knn = 1, int threads = 16) 
         : propagation_iterations(it), 
           patch_size_space(psz_space),
           patch_size_time(psz_time),
-          knn(knn) {}
+          knn(knn),
+          threads(threads)
+    {}
     int propagation_iterations;
     int patch_size_space;
     int patch_size_time;
     int knn;
+    int threads;
 } NNFieldParams;
 
 typedef std::tuple<float,int,int,int> Match;

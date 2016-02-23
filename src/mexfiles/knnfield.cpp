@@ -127,6 +127,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
             memcpy(&val, mxGetData(current), mxGetElementSize(current));
             params.knn = val;
         }
+        if(strcmp(field_name, "threads") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.threads = val;
+        }
     }
 
     // - Outputs -----------------------------------------------------------------------------
