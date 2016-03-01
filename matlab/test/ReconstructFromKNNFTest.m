@@ -10,7 +10,7 @@ function testReconstruct(testCase)
     globals = testCase.TestData.globals;
 
     params = knnf_params();
-    params.knn = 1;
+    params.knn = 2;
     params.patch_size_time = 3;
     params.patch_size_space = 5;
 
@@ -28,7 +28,10 @@ function testReconstruct(testCase)
     nnf(:,:,nF-params.patch_size_time+2:nF,:,:) = 0;
     nnf = int32(nnf);
 
+    nnf = cat(4,nnf,nnf);
+
     weights = single(ones(h,w,nF,1));
+    weights = cat(4,weights,weights);
 
     [spatial,temporal] = viz_warp(single(nnf(:,:,:,1:3)));
     save_video(spatial,fullfile(globals.path.test_output, 'testReconstruct_spatial'), true);
@@ -45,9 +48,7 @@ function testReconstruct(testCase)
 
     err = abs(single(recons)-single(db));
     err = max(err(:));
-    err
     save_video(db,fullfile(globals.path.test_output, 'testReconstruct_input'), true);
     save_video(recons,fullfile(globals.path.test_output, 'testReconstruct_reconstruct'), true);
     assert(err < 1e-5);
-
 end

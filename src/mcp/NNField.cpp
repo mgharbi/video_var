@@ -69,8 +69,6 @@ Video<int> NNField::compute() {
     int w_db  = database_->getWidth(); int w_db_valid    =  w_db  - params_.patch_size_space + 1;
     int nF_db = database_->frameCount(); int nF_db_valid = nF_db  - params_.patch_size_time + 1;
 
-    cout << "db" << h_db_valid << " " << w_db_valid << " " << nF_db_valid << endl;
-
     Video<int> nnf(h, w,  nF, 4*params_.knn);
     
     nn_offset_ = 4*nVoxels;
@@ -78,12 +76,16 @@ Video<int> NNField::compute() {
     #if defined(_OPENMP)
         int n_threads = 1;
         n_threads = params_.threads;
-        cout << "Using OpenMP with " << n_threads << " threads" << endl;
+        if(params_.verbosity > 0) {
+            cout << "Using OpenMP with " << n_threads << " threads" << endl;
+        }
     #endif
 
     // init
-    printf("+ NNF initialization with size %dx%dx%d, ",h,w,nF);
-    printf("patch size %dx%d\n",params_.patch_size_space,params_.patch_size_time);
+    if(params_.verbosity > 0) {
+        printf("+ NNF initialization with size %dx%dx%d, ",h,w,nF);
+        printf("patch size %dx%d\n",params_.patch_size_space,params_.patch_size_time);
+    }
     #pragma omp parallel for num_threads(n_threads)
     for (int t = 0; t < nF - params_.patch_size_time  + 1; ++t) 
     {
@@ -112,7 +114,9 @@ Video<int> NNField::compute() {
 
     for (int iter = 0; iter < params_.propagation_iterations; ++iter) 
     {
-        printf("  - iteration %d/%d\n", iter+1,params_.propagation_iterations);
+        if(params_.verbosity > 0) {
+            printf("  - iteration %d/%d\n", iter+1,params_.propagation_iterations);
+        }
         #pragma omp parallel num_threads(n_threads)
         {
             int* pNNF    = nnf.dataWriter();
@@ -286,7 +290,9 @@ Video<int> NNField::compute() {
         for (int k = 0; k < params_.knn; ++k)
         {
             avg_cost[k] /= nVoxels;
-            cout << "    match cost [" << k << "] : " << avg_cost[k] << endl;;
+            if(params_.verbosity > 0) {
+                cout << "    match cost [" << k << "] : " << avg_cost[k] << endl;;
+            }
         }
 
     } // propagation iteration

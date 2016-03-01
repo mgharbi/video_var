@@ -155,6 +155,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
             memcpy(&val, mxGetData(current), mxGetElementSize(current));
             params.threads = val;
         }
+        if(strcmp(field_name, "verbosity") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.verbosity = val;
+        }
     }
 
     // TODO: check dimensions

@@ -11,6 +11,8 @@ function video = oscillating_square(sz, rect_hsz, cycles)
     % maximun ampliditue of the temporal sin
     MaxAmp = 10;
 
+    img  = uint8(255*rand(2*rect_hsz+1,2*rect_hsz+1,3));
+
 
     % changing the sin freq.
     t = linspace(0,2*pi, Nf+1);
@@ -26,12 +28,10 @@ function video = oscillating_square(sz, rect_hsz, cycles)
             start_i = round((Ny-1)/2 - rect_hsz);
             end_i   = round((Ny-1)/2 + rect_hsz);
 
-            frame = zeros(Nx, Ny);
-            frame(start_j:end_j, start_i:end_i) = 0.5;
+            frame = zeros(Nx, Ny,3);
+            frame(start_j:end_j, start_i:end_i, :) = img;
 
-            video(:,:,f,1) = frame;
-            video(:,:,f,2) = frame;
-            video(:,:,f,3) = frame;
+            video(:,:,f,:) = frame;
             f = f+1;
         end
     end

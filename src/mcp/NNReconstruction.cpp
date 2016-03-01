@@ -54,7 +54,7 @@ IVideo NNReconstruction::reconstruct() {
     for (int c = 0; c < nC; ++c)
     {
         int voxel = py + h*(px + w*pt);
-        out.at(voxel,0,0,c) = buffer.at(voxel,0,0,c) / aggregation_count.at(voxel);
+        out.at(voxel,0,0,c) = params_.knn*buffer.at(voxel,0,0,c) / aggregation_count.at(voxel);
     }
 
     return out;

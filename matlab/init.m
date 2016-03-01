@@ -3,6 +3,9 @@ function globals = init()
     [root,~,~]             = fileparts(root);
     [root,~,~]             = fileparts(root);
 
+    global debug_count;
+    debug_count = 0;
+
     % Define directories
     globals.path.root        = root;
     globals.path.data        = fullfile(globals.path.root,'data');

@@ -59,7 +59,9 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
     if(videoA->getHeight()!= videoB->getHeight() ||
         videoA->getWidth() != videoB->getWidth() ||
         videoA->frameCount() != videoB->frameCount()){
-        fprintf(stderr, "Dimensions do not match\n");
+        if(params.verbosity >0) {
+            fprintf(stderr, "Dimensions do not match\n");
+        }
     }
 
     params.useFeatures = false;
@@ -68,7 +70,9 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
 
     // Use gradient features (requires color)
     if(params.useColor && params.useFeatures) {
-        cout << "+ Adding gradient features" << endl;
+        if(params.verbosity > 0) {
+            cout << "+ Adding gradient features" << endl;
+        }
         videoA->addChannels(3);
         videoB->addChannels(3);
 
@@ -119,7 +123,9 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
     dimensions[3] = videoB->frameCount();
     dimensions[4] = sz.nChannels;
 
-    printf("done.\n");
+    if(params.verbosity > 0) {
+        printf("done.\n");
+    }
 }
 
 template <class T>
@@ -128,7 +134,9 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
         vector<IVideo*> &pyramidB
         ) const{
     int n = pyrSizes.size();
-    printf("+ Building ST-pyramids with %d levels...",n);
+    if(params.verbosity > 0) {
+        printf("+ Building ST-pyramids with %d levels...",n);
+    }
     pyramidA[0] = videoA;
     pyramidB[0] = videoB;
     IVideo copy;
@@ -146,14 +154,18 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
         copy.copy(*pyramidB[i-1]);
         VideoProcessing::resize(copy,pyramidB[i]);
     }
-    printf("done.\n");
+    if(params.verbosity >0) {
+        printf("done.\n");
+    }
 }
 
 template <class T>
 void STWarp<T>::initializeWarpField(const vector<int> &dimensions,
         WarpingField<T> &warpField) 
 {
-    printf("+ Generating initial warp field\n");
+    if(params.verbosity >0) {
+        printf("+ Generating initial warp field\n");
+    }
     warpField = WarpingField<T>(dimensions[0], dimensions[1], 
             dimensions[2], 3);
 
@@ -174,28 +186,32 @@ void STWarp<T>::initializeWarpField(const vector<int> &dimensions,
 
 template <class T>
 WarpingField<T> STWarp<T>::computeWarp() {
-    printf("=== Computing warping field for %s, size %dx%dx%d(%d) ===\n",
+    if(params.verbosity >0) {
+        printf("=== Computing warping field for %s, size %dx%dx%d(%d) ===\n",
             params.name.c_str(),
             dimensions[1],
             dimensions[0],
             dimensions[2],
             videoA->channelCount());
-
-    if(typeid(T)==typeid(float)) {
-        printf("+ Single-precision computation\n");
-    } else{
-        printf("+ Double-precision computation\n");
     }
 
-    if(params.bypassTimeWarp){
-        printf("+ By-passing timewarp map\n");
+    if(params.verbosity >0) {
+        if(typeid(T)==typeid(float)) {
+            printf("+ Single-precision computation\n");
+        } else{
+            printf("+ Double-precision computation\n");
+        }
+        if(params.bypassTimeWarp){
+            printf("+ By-passing timewarp map\n");
+        }
+        printf("+ Regularizing lambda [%5f,%5f,%5f,%5f]\n",
+                params.lambda[0],
+                params.lambda[1],
+                params.lambda[2],
+                params.lambda[3]);
     }
 
-    printf("+ Regularizing lambda [%5f,%5f,%5f,%5f]\n",
-            params.lambda[0],
-            params.lambda[1],
-            params.lambda[2],
-            params.lambda[3]);
+
     
     // Get dimensions of the pyramid levels
     vector<vector<int> > pyrSizes = getPyramidSizes();
@@ -215,8 +231,10 @@ WarpingField<T> STWarp<T>::computeWarp() {
 
         // update dimensions
         this->dimensions = videoA->dimensions();
-        printf("+ Multiscale level %02d: %dx%dx%d (B:%d)\n", i+1,dimensions[1],
-            dimensions[0],dimensions[2],videoB->frameCount());
+        if(params.verbosity >0) {
+            printf("+ Multiscale level %02d: %dx%dx%d (B:%d)\n", i+1,dimensions[1],
+                dimensions[0],dimensions[2],videoB->frameCount());
+        }
 
         // resample warping field
         resampleWarpingField(warpField,pyrSizes[i]);
@@ -243,16 +261,22 @@ WarpingField<T> STWarp<T>::computeWarp() {
 template <class T>
 void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
     for (int warpIter = 0; warpIter < params.warpIterations; ++warpIter) {
-        printf("  - warp iteration %02d\n",warpIter+1);
+        if(params.verbosity >0) {
+            printf("  - warp iteration %02d\n",warpIter+1);
+        }
 
         // Get derivatives
-        printf("    - computing derivatives...");
+        if(params.verbosity >0) {
+            printf("    - computing derivatives...");
+        }
         Video<T> Bx(videoB->size());
         Video<T> By(videoB->size());
         Video<T> Bt(videoB->size());
         Video<T> C(videoB->size());
         computePartialDerivatives(warpField,Bx,By,Bt,C);
-        printf("done.\n");
+        if(params.verbosity >0) {
+            printf("done.\n");
+        }
 
         // marginal warpField update
         WarpingField<T> dWarpField = WarpingField<T>(warpField.size());
@@ -260,7 +284,9 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
         warpingIteration(warpField, Bx, By, Bt, C, dWarpField);
 
         if (params.limitUpdate) {
-            printf("    - limiting warp update to [-1,1]");
+            if(params.verbosity >0) {
+                printf("    - limiting warp update to [-1,1]");
+            }
             dWarpField.clamp(-1,1);
         }
 

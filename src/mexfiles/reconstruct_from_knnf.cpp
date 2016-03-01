@@ -19,9 +19,10 @@ void reconstruct_from_knnf(const mwSize *dims, const unsigned char* db,
 
     IVideo video_db;
     int d[4];
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 3; ++i) {
         d[i] = dims[i];
     }
+    d[3] = 3;
     video_db.initFromMxArray(4, d, db);
 
     Video<int32_t> video_nnf;
@@ -44,7 +45,7 @@ void reconstruct_from_knnf(const mwSize *dims, const unsigned char* db,
     NNReconstruction recons(&video_db,&video_nnf,&video_w,params);
     IVideo out = recons.reconstruct();
 
-    out.copyToMxArray(dims[0]*dims[1]*dims[2]*dims[3],outMatrix);
+    out.copyToMxArray(d_nnf[0]*d_nnf[1]*d_nnf[2]*3,outMatrix);
 }
 
 /* The gateway function */
