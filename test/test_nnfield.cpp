@@ -27,7 +27,7 @@ TEST_F(NNFieldTest, zero_warp_field) {
     params.propagation_iterations = 3;
 
     NNField field(&A, &B, params);
-    Video<int> nnf = field.compute();
+    Video<int> nnf(std::move(field.compute()));
 
     // Check the first match is exact
     for (int i = 0; i < 10-params.patch_size_space; ++i)

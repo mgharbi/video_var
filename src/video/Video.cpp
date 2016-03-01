@@ -52,6 +52,24 @@ Video<T>::Video(const Video<T>& source) {
     copy(source);
 }
 
+/** 
+ * Move constructor.
+ * @param[in] source other video to copy from.
+ */
+template <class T>
+Video<T>::Video(Video<T>&& source) :
+    pData(source.pData),
+    height(source.height),
+    width(source.width),
+    nFrames(source.nFrames),
+    nChannels(source.nChannels),
+    nVoxels(source.nVoxels),
+    nElements(source.nElements)
+{
+    source.pData = NULL;
+}
+
+
 template <class T>
 Video<T>::~Video() {
     if( pData != NULL ) {
@@ -80,9 +98,10 @@ void Video<T>::initFromMxArray(int ndims, int* dims, const T* data) {
 template <class T>
 void Video<T>::copyToMxArray(int n, T* data) const {
     assert(n == height*width*nFrames*nChannels);
-    for (int x = 0; x < height*width*nFrames*nChannels; ++x) {
-        data[x] = pData[x];
-    }
+    memcpy(data, pData, n*sizeof(T));
+    // for (int x = 0; x < height*width*nFrames*nChannels; ++x) {
+    //     data[x] = pData[x];
+    // }
 
 }
 
@@ -120,7 +139,25 @@ void Video<T>::allocate(int h, int w, int nF, int nC) {
 
 template <class T>
 Video<T>& Video<T>::operator=(const Video<T>& source) {
-	copy(source);
+    if(this != &source) {
+        copy(source);
+    }
+    return *this;
+}
+
+template <class T>
+Video<T>& Video<T>::operator=(Video<T>&& source) {
+    if(this != &source) {
+        clear();
+        pData     = source.pData;
+        height    = source.height;
+        width     = source.width;
+        nFrames   = source.nFrames;
+        nChannels = source.nChannels;
+        nVoxels   = source.nVoxels;
+        nElements = source.nElements;
+        source.pData = NULL;
+    }
 	return *this;
 }
 
@@ -214,6 +251,57 @@ void Video<T>::collapse() {
     }
     this->copy(temp);
 }
+
+template <class T>
+Video<T>& Video<T>::operator+=(const Video<T> &other) {
+    assert(elementCount() == other.elementCount());
+    for (int i = 0; i < elementCount(); ++i) {
+        at(i) += other.at(i);
+    }
+    return *this;
+}
+template <class T>
+Video<T>& Video<T>::operator-=(const Video<T> &other) {
+    assert(elementCount() == other.elementCount());
+    for (int i = 0; i < elementCount(); ++i) {
+        at(i) -= other.at(i);
+    }
+    return *this;
+}
+template <class T>
+Video<T>& Video<T>::operator*=(const Video<T> &other) {
+    assert(elementCount() == other.elementCount());
+    for (int i = 0; i < elementCount(); ++i) {
+        at(i) *= other.at(i);
+    }
+    return *this;
+}
+template <class T>
+Video<T>& Video<T>::operator/=(const Video<T> &other) {
+    assert(elementCount() == other.elementCount());
+    for (int i = 0; i < elementCount(); ++i) {
+        at(i) /= other.at(i);
+    }
+    return *this;
+}
+
+template <class T>
+Video<T> Video<T>::operator+(const Video<T> &other) {
+    return Video<T>(*this) += other;
+}
+template <class T>
+Video<T> Video<T>::operator-(const Video<T> &other) {
+    return Video<T>(*this) -= other;
+}
+template <class T>
+Video<T> Video<T>::operator*(const Video<T> &other) {
+    return Video<T>(*this) *= other;
+}
+template <class T>
+Video<T> Video<T>::operator/(const Video<T> &other) {
+    return Video<T>(*this) /= other;
+}
+
 
 
 template class Video<unsigned char>;

@@ -1,5 +1,7 @@
 #include "mcp/NNField.hpp"
 #include <algorithm>
+#include <cassert>
+
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
@@ -7,9 +9,9 @@
 NNField::~NNField() {
 }
 
-float NNField::getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b) 
+int NNField::getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b) 
 {
-    float ans = 0;
+    int ans = 0;
     const unsigned char* pA = A.dataReader();
     const unsigned char* pB = B.dataReader();
 
@@ -24,24 +26,11 @@ float NNField::getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, i
         int indexA = y+y_a + h*( x+x_a + w*(t+t_a));
         int indexB = y+y_b + h*( x+x_b + w*(t+t_b));
         for( int l = 0 ; l < A.channelCount() ; l++ ){
-            float c = (float)pA[indexA+l*nVoxels] - (float)pB[indexB+l*nVoxels];
+            int c = (int)pA[indexA+l*nVoxels] - (int)pB[indexB+l*nVoxels];
             ans += c*c;
         }
     }
     return ans;
-}
-
-void NNField::improve_guess(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
-    int &y_best, int &x_best, int &t_best, float& cost,
-    int y_p, int x_p, int t_p)
-{
-    float d = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
-    if( d < cost) {
-        cost = d;
-        y_best = y_p;
-        x_best = x_p;
-        t_best = t_p;
-    }
 }
 
 void NNField::improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
@@ -55,9 +44,9 @@ void NNField::improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int 
     }
 
     // compute distance
-    float candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
+    int candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
 
-    float err = std::get<0>(current_best[0]);
+    int err = std::get<0>(current_best[0]);
 
     if( candidate_dist < err) { // we have a better match
         std::pop_heap(current_best.begin(), current_best.end());
@@ -70,26 +59,27 @@ void NNField::improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int 
 
 Video<int> NNField::compute() {
 
-    int h       = video_->getHeight(); int h_valid = h - params_.patch_size_space+1;
-    int w       = video_->getWidth(); int w_valid = w - params_.patch_size_space+1;
+    int h       = video_->getHeight();  int h_valid  =  h - params_.patch_size_space+1;
+    int w       = video_->getWidth();   int w_valid  =  w - params_.patch_size_space+1;
     int nF      = video_->frameCount(); int nF_valid = nF - params_.patch_size_time+1;
     int nVoxels = video_->voxelCount();
 
     // So that patches don't read out of database
-    int h_db  = database_->getHeight(); int h_db_valid = h_db  - params_.patch_size_space + 1;
-    int w_db  = database_->getWidth(); int w_db_valid = w_db  - params_.patch_size_space + 1;
-    int nF_db  = database_->frameCount(); int nF_db_valid = nF_db  - params_.patch_size_time + 1;
+    int h_db  = database_->getHeight(); int h_db_valid   =  h_db  - params_.patch_size_space + 1;
+    int w_db  = database_->getWidth(); int w_db_valid    =  w_db  - params_.patch_size_space + 1;
+    int nF_db = database_->frameCount(); int nF_db_valid = nF_db  - params_.patch_size_time + 1;
 
-    Video<int> nnf(h, w,  nF, 3*params_.knn);
-    Video<float> nnf_dist(h, w,  nF, params_.knn);
+    cout << "db" << h_db_valid << " " << w_db_valid << " " << nF_db_valid << endl;
+
+    Video<int> nnf(h, w,  nF, 4*params_.knn);
     
-    nn_offset_ = 3*nVoxels;
+    nn_offset_ = 4*nVoxels;
 
-    int n_threads = 1;
     #if defined(_OPENMP)
+        int n_threads = 1;
         n_threads = params_.threads;
+        cout << "Using OpenMP with " << n_threads << " threads" << endl;
     #endif
-    cout << "Using OpenMP with " << n_threads << " threads" << endl;
 
     // init
     printf("+ NNF initialization with size %dx%dx%d, ",h,w,nF);
@@ -98,7 +88,6 @@ Video<int> NNField::compute() {
     for (int t = 0; t < nF - params_.patch_size_time  + 1; ++t) 
     {
         int* pNNF    = nnf.dataWriter();
-        float* pCost = nnf_dist.dataWriter();
         for (int x = 0; x < w  - params_.patch_size_space + 1; ++x)
         {
             for (int y = 0; y < h  - params_.patch_size_space + 1; ++y) 
@@ -111,7 +100,11 @@ Video<int> NNField::compute() {
                     pNNF[index + 0*nVoxels + k*nn_offset_] = x_db;
                     pNNF[index + 1*nVoxels + k*nn_offset_] = y_db;
                     pNNF[index + 2*nVoxels + k*nn_offset_] = t_db;
-                    pCost[index + k*nVoxels] = getPatchCost(*video_, *database_, y,x,t,y_db,x_db,t_db);
+                    pNNF[index + 3*nVoxels + k*nn_offset_] = getPatchCost(*video_, *database_, y,x,t,y_db,x_db,t_db);
+
+                    assert(pNNF[index + 0*nVoxels + k*nn_offset_] < w_db_valid);
+                    assert(pNNF[index + 1*nVoxels + k*nn_offset_] < h_db_valid);
+                    assert(pNNF[index + 2*nVoxels + k*nn_offset_] < nF_db_valid);
                 }
             } // y loop
         } // x loop
@@ -123,7 +116,6 @@ Video<int> NNField::compute() {
         #pragma omp parallel num_threads(n_threads)
         {
             int* pNNF    = nnf.dataWriter();
-            float* pCost = nnf_dist.dataWriter();
             int tmin = 0;
             int tmax = nF_valid;
             int xmin = 0;
@@ -171,7 +163,7 @@ Video<int> NNField::compute() {
                     int x_best    = pNNF[index + 0*nVoxels + k*nn_offset_];
                     int y_best    = pNNF[index + 1*nVoxels + k*nn_offset_];
                     int t_best    = pNNF[index + 2*nVoxels + k*nn_offset_];
-                    float best_cost = pCost[index + k*nVoxels];
+                    int best_cost = pNNF[index + 3*nVoxels + k*nn_offset_];
                     current_best.push_back(Match(best_cost, x_best,y_best,t_best));
                     all_matches.emplace(PatchCoord(x_best,y_best,t_best),true);
                 }
@@ -274,19 +266,22 @@ Video<int> NNField::compute() {
                     pNNF[index + 0*nVoxels + k*nn_offset_] = std::get<1>(current_best[k]);
                     pNNF[index + 1*nVoxels + k*nn_offset_] = std::get<2>(current_best[k]);
                     pNNF[index + 2*nVoxels + k*nn_offset_] = std::get<3>(current_best[k]);
-                    pCost[index + k*nVoxels] = std::get<0>(current_best[k]);
+                    pNNF[index + 3*nVoxels + k*nn_offset_] = std::get<0>(current_best[k]);
+                    assert(pNNF[index + 0*nVoxels + k*nn_offset_] < w_db_valid);
+                    assert(pNNF[index + 1*nVoxels + k*nn_offset_] < h_db_valid);
+                    assert(pNNF[index + 2*nVoxels + k*nn_offset_] < nF_db_valid);
                 }
             } // patches loop
 
         } // parallel 
 
         // Display matching cost
-        float* pCost = nnf_dist.dataWriter();
+        const int* pCost = nnf.dataReader() + 3*nVoxels;
         vector<float> avg_cost(params_.knn);
         for (int k = 0; k < params_.knn; ++k)
         for (int i = 0; i < nVoxels; ++i)
         {
-            avg_cost[k] += pCost[i+k*nVoxels];
+            avg_cost[k] += (float) pCost[i+k*nn_offset_];
         }
         for (int k = 0; k < params_.knn; ++k)
         {

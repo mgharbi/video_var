@@ -31,11 +31,12 @@ for j=1:length(c)
         f = f+1;
     end
 end
-%%
-writerObj = VideoWriter(filename, 'MPEG-4'); %'Uncompressed AVI'
-    open(writerObj);
-    for i = 1:length(mov)
-        writeVideo(writerObj,mov(i).cdata);
-    end
-    close(writerObj);
-    
+
+%
+% writerObj = VideoWriter(filename, 'MPEG-4'); %'Uncompressed AVI'
+%     open(writerObj);
+%     for i = 1:length(mov)
+%         writeVideo(writerObj,mov(i).cdata);
+%     end
+%     close(writerObj);
+%     

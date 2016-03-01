@@ -6,7 +6,7 @@ function video = load_video(path)
         files = dir(fullfile(path,'*.png'));
         nFrames = length(files);
         if nFrames == 0
-            throw 'no images found'
+            throw(MException('nlvv:VideoNotFound', 'no images found'));
         end
         names  = {files(:).name};
         im1 = imread(fullfile(path, names{1}));

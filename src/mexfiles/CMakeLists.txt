@@ -4,6 +4,7 @@ get_property(inc_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
 set(mexfiles 
     stwarp
     knnfield
+    reconstruct_from_knnf
 )
 
 foreach( f ${mexfiles})

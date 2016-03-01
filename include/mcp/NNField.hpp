@@ -23,7 +23,7 @@ typedef struct NNFieldParams {
     int threads;
 } NNFieldParams;
 
-typedef std::tuple<float,int,int,int> Match;
+typedef std::tuple<int,int,int,int> Match;
 typedef std::tuple<int,int,int> PatchCoord;
 
 struct PatchCoordHash : public std::unary_function<PatchCoord, std::size_t>
@@ -54,9 +54,9 @@ private:
     NNFieldParams params_;
     int nn_offset_;
 
-    float getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b);
+    int getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b);
     void improve_guess(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
-        int &y_best, int &x_best, int &t_best, float &cost,
+        int &y_best, int &x_best, int &t_best, int &cost,
         int y_p, int x_p, int t_p);
     void improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
         vector<Match> &current_best,

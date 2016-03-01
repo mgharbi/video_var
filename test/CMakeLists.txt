@@ -6,6 +6,7 @@ set(all_tests
     video
     stwarp
     nnfield
+    nn_reconstruct
 )
 
 foreach(t ${all_tests})

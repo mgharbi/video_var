@@ -27,4 +27,5 @@ function globals = init()
     addpath('nlvv');
     addpath('test');
     addpath('params');
+    addpath('synth');
 end % init

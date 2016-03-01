@@ -43,11 +43,14 @@ public:
     Video(int height, int width, int nFrames, int nChannels);
     Video(VideoSize s);
     Video(const Video& source);
+    Video(Video&& source);
+
+    Video<T>& operator=(const Video<T>& source);
+    Video<T>& operator=(Video<T>&& source);
 
     virtual ~Video();
 
     void reset(T value = (T) 0);
-    Video<T>& operator=(const Video<T>& source);
 
     inline VideoSize size() const;
     inline vector<int> dimensions() const;
@@ -79,7 +82,9 @@ public:
     inline T* dataWriter() {return pData;};
     inline T* channelWriter(int k) const {
         return pData+k*height*width*nFrames; };
-    inline T at(int i, int j, int k, int l) const { 
+    inline T at(int i, int j = 0, int k = 0, int l = 0) const { 
+        return pData[i + height*(j + width*(k + nFrames*l))]; };
+    inline T& at(int i, int j = 0, int k = 0, int l = 0) { 
         return pData[i + height*(j + width*(k + nFrames*l))]; };
     inline void setAt(T val, int i, int j, int k, int l) { 
         pData[i + height*(j + width*(k + nFrames*l))] = val; };
@@ -95,6 +100,16 @@ public:
     // MATLAB I/O
     void initFromMxArray(int ndims, int* dims, const T* data);
     void copyToMxArray(int n, T* data) const;
+
+    // Operators
+    Video<T>& operator+=(const Video<T> &other);
+    Video<T>& operator-=(const Video<T> &other);
+    Video<T>& operator*=(const Video<T> &other);
+    Video<T>& operator/=(const Video<T> &other);
+    Video<T> operator+(const Video<T> &other);
+    Video<T> operator-(const Video<T> &other);
+    Video<T> operator*(const Video<T> &other);
+    Video<T> operator/(const Video<T> &other);
 
 protected:
     T* pData;
@@ -299,11 +314,7 @@ void Video<T>::add(Video<T2> other) throw(IncorrectSizeException){
         }
     }
 }
-
-/**
- * Element-wise subtraction in place with the other array.
- */
-template <class T>
+/** * Element-wise subtraction in place with the other array. */ template <class T>
 template <class T2>
 void Video<T>::subtract(Video<T2> other) throw(IncorrectSizeException){
     if(!checkSizeMatch(other)) throw IncorrectSizeException();
@@ -341,6 +352,7 @@ void Video<T>::clamp(T min, T max) {
 typedef Video<unsigned char> IVideo;
 typedef Video<float> FVideo;
 typedef Video<double> DVideo;
+
 
 
 #endif /* end of include guard: VIDEO_HPP_8XGAVAGK */

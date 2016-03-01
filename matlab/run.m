@@ -10,8 +10,7 @@
 
 globals = init();
 
-% video = load_video('../data/rockettes01');
-video = randn(20,30,10,3);
+video = oscillating_square(51,11,1);
 
 params = nlvv_params();
 
