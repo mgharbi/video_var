@@ -14,9 +14,13 @@ for it_inner = 1:params.n_inner_iterations
     [nnf,dist] = knnfield(new_video, video_regular, params.knnf);
     fprintf('%.1fs.\n', toc(t));
 
-    [space,time] = viz_warp(single(nnf(:,:,:,1:3)));
+    [space,time] = viz_warp(nnf_to_warp(nnf(:,:,:,1:3)));
     save_video(space, fullfile(params.debug.output, debug_path(sprintf('%d_knnf_s.mp4', params.debug.outer_it))), true);
     save_video(time, fullfile(params.debug.output, debug_path(sprintf('%d_knnf_t.mp4', params.debug.outer_it))), true);
+
+    coord = round(size(nnf)/2);
+    coord = coord(1:end-1);
+    nn_gallery(new_video, video_regular,nnf,dist,coord,params.knnf); 
 
     % get patch weights
     w = compute_nn_weights(dist, params.knnf);

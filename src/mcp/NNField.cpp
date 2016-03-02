@@ -35,13 +35,14 @@ int NNField::getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int
 
 void NNField::improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
     vector<Match> &current_best,
-    PatchCoordHashMap &all_matches,
+    MatchSet &all_matches,
     int y_p, int x_p, int t_p)
 {
     // if current pos in hash map, skip
-    if(all_matches.count(PatchCoord(x_p,y_p,t_p))) {
-        return;
-    }
+    // if(all_matches.count(Match(0,x_p,y_p,t_p)) > 0) {
+    //     cout << "skipping " << all_matches.size() << endl;
+    //     return;
+    // }
 
     // compute distance
     int candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
@@ -49,11 +50,22 @@ void NNField::improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int 
     int err = std::get<0>(current_best[0]);
 
     if( candidate_dist < err) { // we have a better match
-        std::pop_heap(current_best.begin(), current_best.end());
-        current_best.pop_back();
+        MatchSet ms = all_matches;
+        Match mnew = Match(candidate_dist,x_p,y_p,t_p);
 
-        current_best.push_back(Match(candidate_dist,x_p,y_p,t_p));
+        // Insert newer best, if not in already
+        bool ok = all_matches.insert(mnew).second;
+        if(!ok) {
+            return; // already in, do nothing
+        }
+        current_best.push_back(mnew);
         std::push_heap(current_best.begin(), current_best.end());
+
+        // Remove worst patch
+        std::pop_heap(current_best.begin(), current_best.end());
+        Match m = current_best.back();
+        current_best.pop_back();
+        all_matches.erase(m);
     }
 }
 
@@ -161,15 +173,16 @@ Video<int> NNField::compute() {
 
                 // get current best k-nn of the patch under consideration
                 vector<Match> current_best;
-                PatchCoordHashMap all_matches;
+                MatchSet all_matches;
                 current_best.reserve(params_.knn);
                 for (int k = 0; k < params_.knn; ++k) {
                     int x_best    = pNNF[index + 0*nVoxels + k*nn_offset_];
                     int y_best    = pNNF[index + 1*nVoxels + k*nn_offset_];
                     int t_best    = pNNF[index + 2*nVoxels + k*nn_offset_];
                     int best_cost = pNNF[index + 3*nVoxels + k*nn_offset_];
-                    current_best.push_back(Match(best_cost, x_best,y_best,t_best));
-                    all_matches.emplace(PatchCoord(x_best,y_best,t_best),true);
+                    Match m(best_cost, x_best,y_best,t_best);
+                    current_best.push_back(m);
+                    all_matches.insert(m);
                 }
                 make_heap(current_best.begin(), current_best.end());
 
@@ -258,10 +271,10 @@ Video<int> NNField::compute() {
                         int x_p    = x_min + rand() % (x_max-x_min);
                         int t_p    = t_min + rand() % (t_max-t_min);
 
-                        improve_knn(*video_,*database_,y, x, t,
-                                current_best,
-                                all_matches,
-                                y_p, x_p, t_p);
+                        // improve_knn(*video_,*database_,y, x, t,
+                        //         current_best,
+                        //         all_matches,
+                        //         y_p, x_p, t_p);
 
                     }
                 }

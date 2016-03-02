@@ -1,4 +1,4 @@
 globals = init();
 
-t = ReconstructFromKNNFTest;
-t(1).run();
+t = KNNfieldTest;
+t(4).run();

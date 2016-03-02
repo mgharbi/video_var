@@ -120,3 +120,42 @@ function test3DNNF(testCase)
     save_video(spatial,fullfile(globals.path.test_output, 'test3DNNF_spatial'), true);
     save_video(temporal,fullfile(globals.path.test_output, 'test3DNNF_temporal'), true);
 end
+
+function testUniqueNeighbors(testCase)
+    globals = testCase.TestData.globals;
+
+    rng(0);
+    video  = uint8(255*rand(10,20,30,3));
+    db = video;
+
+    params = knnf_params();
+    params.propagation_iterations = 1;
+    params.patch_size_space       = 5;
+    params.patch_size_time        = 5;
+    params.knn                    = 20;
+    nnf                           = knnfield(video, db, params);
+    
+    [nnf,dist] = knnfield(video, db, params);
+
+    [h,w,nF,knn] = size(nnf);
+    knn = knn/3;
+
+    unik = true(h,w,nF);
+    for k = 1:knn
+        eq = false(h,w,nF); % is one pair of channel equal ? (for each voxel)
+        for j = (k+1):knn
+            eq_x =  (nnf(:,:,:,3*(k-1)+1) == nnf(:,:,:,3*(j-1)+1));
+            eq_y =  (nnf(:,:,:,3*(k-1)+2) == nnf(:,:,:,3*(j-1)+2));
+            eq_t =  (nnf(:,:,:,3*(k-1)+3) == nnf(:,:,:,3*(j-1)+3));
+            eq = eq | (eq_x & eq_y & eq_t); % Are all three coords equal?
+        end
+        unik = unik & ~eq;
+    end
+    unik(end-params.patch_size_space+1:end,:,:,:) = true;
+    unik(:, end-params.patch_size_space+1:end,:,:) = true;
+    unik(:,:,end-params.patch_size_time+1:end,:) = true;
+
+    % Less than 1% of duplicate NN
+    notu = find(~unik(:));
+    assert(numel(notu)*1.0/numel(unik) < .01);
+end
