@@ -11,7 +11,7 @@
 globals = init();
 
 rng(0);
-video = oscillating_square(51,11,1:3);
+video = oscillating_square(51,11,[1,1.2,1.3]);
 
 params = nlvv_params();
 
@@ -22,5 +22,9 @@ if exist(params.debug.output,'dir')
 end
 
 save_video(video, fullfile(params.debug.output, debug_path('input.mp4')), false);
+sl = video_slice(video,2,round(size(video,2)/2));
+imwrite(sl, fullfile(params.debug.output, debug_path('yt_slice.png')));
+sl = video_slice(video,1,round(size(video,1)/2));
+imwrite(sl, fullfile(params.debug.output, debug_path('xt_slice.png')));
 
-res = nlvv(video,params);
+% res = nlvv(video,params);

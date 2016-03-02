@@ -15,13 +15,14 @@ function video = oscillating_square(sz, rect_hsz, cycles)
 
 
     % changing the sin freq.
-    t = linspace(0,2*pi, Nf+1);
+    t = linspace(0,1, Nf+1);
+    t
 
     video = zeros(Nx,Ny,length(cycles)*Nf,3, 'uint8');
 
     f = 1;
     for j=1:length(cycles)
-        V{j} = MaxAmp*sin(t*cycles(j));
+        V{j} = MaxAmp*sin(2*pi*t*cycles(j));
         for i=1:Nf;
             start_j = round((Ny-1)/2 - rect_hsz+V{j}(i));
             end_j   = round((Ny-1)/2 + V{j}(i)+ rect_hsz);

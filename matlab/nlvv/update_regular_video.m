@@ -1,11 +1,13 @@
 function new_video = update_regular_video(video_regular, video_warped, params)
 % Updates the regular video and nearest-neighbors database, the
 % warping field is fixed
+% We compute a new_video that has more regularity (patch recurrence) than video_regular.
+% new_video samples patches from video_regular and should be 'close' to video_warped.
 
 new_video = video_regular;
-nn_field = [];
 for it_inner = 1:params.n_inner_iterations
     fprintf('  - Inner iteration %2d of %2d\n', it_inner, params.n_inner_iterations);
+
     % Get nearest neighbors
     t = tic;
     fprintf('    . %d-NN\t\t\t', params.knnf.knn);
