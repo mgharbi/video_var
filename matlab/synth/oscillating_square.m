@@ -1,4 +1,5 @@
-function video = oscillating_square(sz, rect_hsz, frequency_ramp)
+function video = oscillating_square(sz, rect_hsz, frequency_ramp, fig)
+
 
     % image dimensions
     Nx = sz;
@@ -22,15 +23,36 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp)
 
     offset = MaxAmp*sin(2*pi*frequency_ramp.*t); 
 
+    midx = Nx-1/2;
+    midy = Ny-1/2;
+    minx = round((Ny-1)/2 - rect_hsz)*ones(Nf,1);
+    maxx = round((Ny-1)/2 + rect_hsz)*ones(Nf,1);
+    miny = round((Ny-1)/2 - rect_hsz + offset);
+    maxy   = round((Ny-1)/2 + offset + rect_hsz);
     for f=1:Nf;
-        start_j = round((Ny-1)/2 - rect_hsz + offset(f));
-        end_j   = round((Ny-1)/2 + offset(f) + rect_hsz);
-        start_i = round((Ny-1)/2 - rect_hsz);
-        end_i   = round((Ny-1)/2 + rect_hsz);
-
         frame = bg;
-        frame(start_j:end_j, start_i:end_i, :) = img;
-
+        frame(miny(f):maxy(f), minx(f):maxx(f), :) = img;
         video(:,:,f,:) = frame;
+    end
+
+    if nargin >= 4
+        tplot = 1:Nf;
+        fprintf('* Making 3d plot\n');
+        figure(fig);
+        plot3(tplot,minx,miny, ':', 'Color', [0 0.4470 0.7410]);
+        title('Oscillating square')
+        axis equal;
+        axis([0, Nf, 0, Nx, 0, Ny])
+        set(gca,'ydir','reverse')
+        hold on;
+        plot3(tplot,minx,maxy, ':', 'Color', [0 0.4470 0.7410]);
+        plot3(tplot,maxx,maxy, ':', 'Color', [0 0.4470 0.7410]);
+        plot3(tplot,maxx,miny, ':', 'Color', [0 0.4470 0.7410]);
+        for f = 1:5:Nf
+            plot3([f,f,f,f,f], [minx(f),minx(f), maxx(f), maxx(f),minx(f)], [miny(f),maxy(f), maxy(f), miny(f),miny(f)], ':',  'Color', [0 0.4470 0.7410])
+        end
+        xlabel('t')
+        ylabel('x')
+        zlabel('y')
     end
 end % oscillating_square

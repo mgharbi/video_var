@@ -271,10 +271,10 @@ Video<int> NNField::compute() {
                         int x_p    = x_min + rand() % (x_max-x_min);
                         int t_p    = t_min + rand() % (t_max-t_min);
 
-                        // improve_knn(*video_,*database_,y, x, t,
-                        //         current_best,
-                        //         all_matches,
-                        //         y_p, x_p, t_p);
+                        improve_knn(*video_,*database_,y, x, t,
+                                current_best,
+                                all_matches,
+                                y_p, x_p, t_p);
 
                     }
                 }

@@ -153,5 +153,4 @@ for i = 1:NumIter
     else
         img_prev = img_new;
     end
-    
 end

@@ -1,6 +1,4 @@
-2014-01-28
-----------
-* Warping and rendering code
-* sqlite/xml result dump
-* parallel SOR
+TODO
+====
 
+* 2d slice through Tali's code

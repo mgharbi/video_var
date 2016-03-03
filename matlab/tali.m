@@ -5,7 +5,8 @@
 %%
 addpath(genpath(cd),1);
 %% read input image
-img = im2double(imread('images/corn.png'));
+globals = init();
+img = im2double(imread(fullfile(globals.path.data,'yt_slice.png')));
 
 %% set parameters
 param.Smin = 1; % 4
