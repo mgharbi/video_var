@@ -5,7 +5,6 @@ IVideo NNReconstruction::reconstruct() {
     Video<float> buffer(db_->size());
     IVideo out(db_->size());
 
-
     int h  = buffer.getHeight();
     int w  = buffer.getWidth();
     int nF = buffer.frameCount();

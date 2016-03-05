@@ -1,3 +1,5 @@
+include_directories(${inc})
+
 set(libmcp_src 
     STWarp.cpp
     NNField.cpp
@@ -9,9 +11,13 @@ set(libmcp_src
     WarpingField.cpp
 )
 
-include_directories(${inc})
-add_library(mcp SHARED ${libmcp_src})
+cuda_compile(mcp_cuda
+    NNReconstruction.cu
+)
+
+add_library(mcp SHARED ${libmcp_src} ${mcp_cuda})
 target_link_libraries( mcp 
     video
+    ${CUDA_LIBRARIES}
 )
 include_directories("${inc}")

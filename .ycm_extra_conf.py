@@ -40,6 +40,8 @@ flags = [
 '.',
 '-I',
 'include',
+'-isystem',
+'/usr/local/cuda/include',
 '-I',
 '/Applications/MATLAB_R2015b.app/extern/include',
 '-I',

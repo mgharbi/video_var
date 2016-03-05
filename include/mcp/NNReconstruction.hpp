@@ -27,6 +27,7 @@ public:
     virtual ~NNReconstruction() {};
 
     IVideo reconstruct();
+    IVideo reconstruct_gpu();
 
 
 private:
