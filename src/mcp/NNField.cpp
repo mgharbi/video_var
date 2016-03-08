@@ -109,8 +109,8 @@ Video<int> NNField::compute() {
                 int index = y + h*(x + w*t);
                 for (int k = 0 ; k < params_.knn; ++ k) {
                     int t_db               = rand() % nF_db_valid;
-                    int x_db               = rand() % w_db_valid;
-                    int y_db               = rand() % h_db_valid;
+                    int x_db               = x ; //rand() % w_db_valid;
+                    int y_db               = y ; // rand() % h_db_valid;
                     pNNF[index + 0*nVoxels + k*nn_offset_] = x_db;
                     pNNF[index + 1*nVoxels + k*nn_offset_] = y_db;
                     pNNF[index + 2*nVoxels + k*nn_offset_] = t_db;
@@ -244,12 +244,17 @@ Video<int> NNField::compute() {
                 if (rt_start > nF) { rt_start = nF; }
 
                 // int mag_time = rt_start;
-                for (int mag = rs_start; mag >= 1; mag /= 2)
+                int mag = 0; // rs_start;
+                int mag_time = rt_start;
+                while (mag >= 1 || mag_time >= 1)
                 {
-                    int mag_time = mag;
-                    // if(mag_time >= 1) {
-                    //     mag_time /= 2;
-                    // }
+                    if(mag >= 1) {
+                        mag /= 2;
+                    }
+
+                    if(mag_time >= 1) {
+                        mag_time /= 2;
+                    }
 
                     for(int k = 0; k < params_.knn; ++k)
                     {
