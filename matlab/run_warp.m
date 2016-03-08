@@ -14,8 +14,7 @@ globals = init();
 A = load_video('../data/rockettes01');
 B = load_video('../data/rockettes02');
 
-params = struct();
-params.regularization = 10;
+params = stwarp_params();
 
 % Warp
 warp = stwarp(A, B,params);

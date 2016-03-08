@@ -16,13 +16,12 @@ using std::endl;
 typedef float precision_t;
 
 /* The computational routine */
-void stwarp(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, unsigned char *videoB, float *outMatrix)
+void stwarp(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, unsigned char *videoB, float *outMatrix, STWarpParams params)
 {
     // TODO:
     // - pass param struct
     // - pass videos
     // - return stwarp
-    STWarpParams params;
     WarpingField<precision_t> uvw;
     STWarp<precision_t> warper = STWarp<precision_t>();
 
@@ -109,6 +108,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("MotionComparison:stwarp:wrongNumberOfStructElem","Param struct must have one element");
     }
 
+    STWarpParams params;
     for (int i = 0; i < nfields; ++i)
     {
         mxArray *current = mxGetFieldByNumber(prhs[2],0,i);
@@ -116,7 +116,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
         if(current == nullptr) {
             cout << i << " is empty field" << endl;
         }
-        cout << "field " << field_name << endl;
+        if(strcmp(field_name, "verbosity") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.verbosity = val;
+        }
     }
 
     // - Outputs -----------------------------------------------------------------------------
@@ -130,5 +134,5 @@ void mexFunction( int nlhs, mxArray *plhs[],
     // ---------------------------------------------------------------------------------------
 
     /* call the computational routine */
-    stwarp(dimsA, dimsB, videoA, videoB, outMatrix);
+    stwarp(dimsA, dimsB, videoA, videoB, outMatrix, params);
 }
