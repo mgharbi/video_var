@@ -2,11 +2,24 @@ function video = load_video(path)
     [basedir,file,ext] = fileparts(path);
     fromImages = false;
 
-    if strcmp(ext,'')
+    if strcmp(ext,'.mat')
+        video = load(path);
+        video = video.video;
+    else 
+        if ~strcmp(ext,'')
+            i_path = path;
+            path = fullfile(basedir,[file '_tmp']);
+            if ~exist(path,'dir')
+                mkdir(path);
+            end
+            proto = fullfile(path,'%06d.png');
+            cmd = sprintf('ffmpeg -i %s -y %s &>/dev/null', i_path, proto);
+            unix(cmd);
+        end
         files = dir(fullfile(path,'*.png'));
         nFrames = length(files);
         if nFrames == 0
-            throw 'no images found'
+            throw(MException('nlvv:VideoNotFound', 'no images found'));
         end
         names  = {files(:).name};
         im1 = imread(fullfile(path, names{1}));
@@ -16,16 +29,8 @@ function video = load_video(path)
             frame = imread(fullfile(path, names{f}));
             video(:,:,f,:) = frame;
         end
-    else if strcmp(ext,'.mat')
-        video = load(path);
-        video = video.video;
-    else
-        v = VideoReader(path);
-        video = zeros(v.Height,v.Width,v.NumberOfFrames,3,'uint8');
-        size(video);
-        for i = 1:size(video,3)
-            frame = read(v,i);
-            video(:,:,i,:) = frame;
+        if ~strcmp(ext,'')
+            rmdir(path, 's');
         end
     end
 end % load_video

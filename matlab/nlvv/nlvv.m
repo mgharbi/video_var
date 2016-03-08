@@ -21,7 +21,7 @@ warp_field    = [];
 for lvl = 1:n_pyr_levels
     % rescale image to current level
 
-    res = nlvv_ms_iteration(video_current,params,
+    res = nlvv_ms_iteration(video_current,params,...
             video_regular, warp_field);
 
     % [img_regular, img_warped, ux, uy] = NonLocalVarMain(imgCur, param, img_regular, ux, uy);

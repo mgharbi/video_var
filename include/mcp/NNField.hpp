@@ -3,38 +3,50 @@
 
 #include <limits>
 #include <tuple>
-#include <unordered_map>
+#include <unordered_set>
 
 #include "mcp/WarpingField.hpp"
 #include "video/Video.hpp"
 
 typedef struct NNFieldParams {
-    NNFieldParams(int it = 1, int psz_space = 5, int psz_time = 5, int knn = 1, int threads = 16) 
+    NNFieldParams(int it = 1, int psz_space = 5, int psz_time = 5,
+            int knn = 1, int threads = 16, int verbosity = 1) 
         : propagation_iterations(it), 
           patch_size_space(psz_space),
           patch_size_time(psz_time),
           knn(knn),
-          threads(threads)
+          threads(threads),
+          verbosity(verbosity)
     {}
     int propagation_iterations;
     int patch_size_space;
     int patch_size_time;
     int knn;
     int threads;
+    int verbosity;
 } NNFieldParams;
 
-typedef std::tuple<float,int,int,int> Match;
-typedef std::tuple<int,int,int> PatchCoord;
+typedef std::tuple<int,int,int,int> Match; // cost,x,y,t
 
-struct PatchCoordHash : public std::unary_function<PatchCoord, std::size_t>
+struct MatchHash : public std::unary_function<Match, std::size_t>
 {
-    std::size_t operator()(const PatchCoord& p) const
+    std::size_t operator()(const Match& p) const
     {
-        return std::get<0>(p) ^ std::get<1>(p) ^ std::get<2>(p);
+        return std::get<1>(p) ^ std::get<2>(p) ^ std::get<3>(p);
     }
 };
 
-typedef std::unordered_map<PatchCoord,bool, PatchCoordHash> PatchCoordHashMap;
+struct MatchEqualTo : std::binary_function<Match,Match,bool> {
+    bool operator() (const Match& a, const Match& b)  {
+        bool ret = std::get<1>(a) == std::get<1>(b);
+        ret &= (std::get<2>(a) == std::get<2>(b)); 
+        ret &= (std::get<3>(a) == std::get<3>(b)); 
+        return ret;
+    }
+};
+
+
+typedef std::unordered_set<Match, MatchHash, MatchEqualTo> MatchSet;
 
 
 class NNField
@@ -54,13 +66,13 @@ private:
     NNFieldParams params_;
     int nn_offset_;
 
-    float getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b);
+    int getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b);
     void improve_guess(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
-        int &y_best, int &x_best, int &t_best, float &cost,
+        int &y_best, int &x_best, int &t_best, int &cost,
         int y_p, int x_p, int t_p);
     void improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
         vector<Match> &current_best,
-        PatchCoordHashMap &all_matches,
+        MatchSet &all_matches,
         int y_p, int x_p, int t_p);
 };
 
