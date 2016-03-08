@@ -9,7 +9,8 @@ addpath(genpath(cd),1);
 addpath(fullfile('non_local_var','patchmatch-2.1.3'))
 %% read input image
 globals = init();
-img = im2double(imread(fullfile(globals.path.data,'corn.png')));
+img = im2double(imread(fullfile(globals.path.output, 'nlvv_debug','01_yt_slice.png')));
+% img = im2double(imread(fullfile(globals.path.data,'corn.png')));
 % img = im2double(imread(fullfile(globals.path.data,'yt_slice.png')));
 
 %% set parameters
@@ -17,7 +18,7 @@ param.Smin = 1; % 4
 param.Smax = 1; % 9
 param.alpha = 0.03;
 param.lambda = 30;
-param.PatchSize = [9,9];
+param.PatchSize = [21,21];
 % param.NumNN = 2;
 param.DeviationsType = 'Geom';
 

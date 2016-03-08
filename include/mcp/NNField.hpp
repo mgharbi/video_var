@@ -28,24 +28,25 @@ typedef struct NNFieldParams {
 
 typedef std::tuple<int,int,int,int> Match; // cost,x,y,t
 
-struct MatchHash : public std::unary_function<Match, std::size_t>
+typedef struct MatchHash
 {
     std::size_t operator()(const Match& p) const
     {
         return std::get<1>(p) ^ std::get<2>(p) ^ std::get<3>(p);
     }
-};
+} MatchHash;
 
-struct MatchEqualTo : std::binary_function<Match,Match,bool> {
-    bool operator() (const Match& a, const Match& b)  {
+typedef struct MatchEqualTo {
+    bool operator() (const Match& a, const Match& b)  const {
         bool ret = std::get<1>(a) == std::get<1>(b);
         ret &= (std::get<2>(a) == std::get<2>(b)); 
         ret &= (std::get<3>(a) == std::get<3>(b)); 
         return ret;
     }
-};
+} MatchEqualTo;
 
 
+// typedef std::unordered_set<Match, MatchHash> MatchSet;
 typedef std::unordered_set<Match, MatchHash, MatchEqualTo> MatchSet;
 
 

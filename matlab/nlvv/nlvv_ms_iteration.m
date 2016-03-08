@@ -32,13 +32,13 @@ function res = nlvv_ms_iteration(video,params,video_regular,warp_field)
         fprintf('%.1fs.\n', toc(t));
 
         [space,time] = viz_warp(warp_field);
-        save_video(space, fullfile(params.debug.output, debug_path(sprintf('%d_warp_s.mp4', params.debug.outer_it))), true);
-        save_video(time, fullfile(params.debug.output, debug_path(sprintf('%d_warp_t.mp4', params.debug.outer_it))), true);
+        % save_video(space, fullfile(params.debug.output, debug_path(sprintf('%d_warp_s.mp4', params.debug.outer_it))), true);
+        % save_video(time, fullfile(params.debug.output, debug_path(sprintf('%d_warp_t.mp4', params.debug.outer_it))), true);
 
         % Fix boundaries and inversion
 
         video_warped = backward_warp(video_warped, warp_field);
-        save_video(video_warped, fullfile(params.debug.output, debug_path(sprintf('%d_warped.mp4', params.debug.outer_it))));
+        % save_video(video_warped, fullfile(params.debug.output, debug_path(sprintf('%d_warped.mp4', params.debug.outer_it))));
     end
 
     res.video_regular = video_regular;
