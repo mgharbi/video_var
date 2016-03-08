@@ -10,9 +10,14 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
     Nf = numel(frequency_ramp);
 
     img  = uint8(255*rand(2*rect_hsz(1)+1,2*rect_hsz(2)+1,3));
+    img(:,:,1) = 255;
+    img(:,:,2) = 1;
+    img(:,:,3) = 1;
     bg  = uint8(zeros(Ny,Nx,1));
     % bg  = uint8(127*rand(Ny,Nx,1));
     bg = repmat(bg, [1,1,3]);
+    bg_cube = uint8(255*zeros(Ny,Nx,Nf,1)); 
+    bg_cube = repmat(bg_cube, [1,1,1,3]);
 
 
     % changing the sin freq.
@@ -20,7 +25,8 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
 
     video = zeros(Ny,Nx,Nf,3, 'uint8');
 
-    offset = MaxAmp*sin(2*pi*frequency_ramp.*t); 
+    offset = MaxAmp*profile(2*pi*frequency_ramp.*t); 
+    % offset = MaxAmp*sin(2*pi*frequency_ramp.*t); 
 
     midx = Nx-1/2;
     midy = Ny-1/2;
@@ -33,11 +39,13 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
     ref_frame(miny(1):maxy(1), minx(1):maxx(1), :) = img;
 
     for f=1:Nf;
-        frame = imtranslate(ref_frame,[0,offset(f)],'method', 'cubic');
+        frame = imtranslate(ref_frame,[0,offset(f)],'method', 'linear');
         % frame = bg;
         % frame(miny(f):maxy(f), minx(f):maxx(f), :) = img;
         video(:,:,f,:) = frame;
     end
+
+    video(video==0) = bg_cube(video == 0);
 
     if nargin >= 5
         tplot = 1:Nf;
@@ -60,3 +68,18 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
         zlabel('y')
     end
 end % oscillating_square
+
+function ret = profile(t)
+    t = mod(t,2*pi);
+    mode = 'triangle';
+    if strcmp(mode,'triangle')
+        ret = zeros(numel(t), 1);
+        ret(t<pi) = (1-t(t<pi)/(pi));
+        ret(t>=pi) = (t(t>=pi)-pi)/(pi);
+        ret = ret*2 - 1.5;
+    elseif strcmp(mode,'square')
+        ret(t<pi) = -1;
+        ret(t>=pi) = 1;
+    end
+end
+

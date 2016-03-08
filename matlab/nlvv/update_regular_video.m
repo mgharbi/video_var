@@ -43,8 +43,24 @@ for it_inner = 1:params.n_inner_iterations
 
     % save_video(new_video, fullfile(params.debug.output, debug_path(sprintf('%d_%d_regular.mp4', params.debug.outer_it, it_inner))), false);
 
+    nnfwarp = nnf_to_warp(nnf);
+    nnfmap = zeros(size(nnf,1),(size(nnf,2)+1)*size(nnf,4)/3,size(nnf,3),3);
+    % wmap = zeros(size(w,1), (size(w,2)+1)*size(w,4), size(w,3),1);
+    for i = 1:size(nnf,4)/3
+        nnfmap(:, (i-1)*(size(nnf,2)+1)+1:i*(size(nnf,2)+1)-1, :, :) = nnfwarp(:,:,:,3*(i-1)+1:3*i);
+        % wmap(:, (i-1)*(size(w,2)+1)+1:i*(size(w,2)+1)-1, :, :) = w(:,:,:,i);
+    end
+    [space,time] = viz_warp(nnfmap);
+    % save_video(space, fullfile(params.debug.output, debug_path(sprintf('%d_knnf_s.mp4', params.debug.outer_it))), true);
+    % save_video(time, fullfile(params.debug.output, debug_path(sprintf('%d_knnf_t.mp4', params.debug.outer_it))), true);
+    % wmap = normalize_video(wmap);
+
     sl = video_slice(new_video,2,round(size(new_video,2)/2));
     imwrite(sl, fullfile(params.debug.output, debug_path(sprintf('%d_%d_yt_slice.png',params.debug.outer_it, it_inner))));
+
+    sl = video_slice(time,2,round(size(new_video,2)/2));
+    imwrite(sl, fullfile(params.debug.output, debug_path(sprintf('%d_%d_yt_nnf_time.png',params.debug.outer_it, it_inner))));
+    save_video(time, fullfile(params.debug.output, debug_path(sprintf('%d_knnf_t.mp4', params.debug.outer_it))), true);
 
     if it_inner > 1
         err = (new_video-video_prev).^2;

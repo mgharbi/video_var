@@ -17,9 +17,9 @@ img = im2double(imread(fullfile(globals.path.output, 'nlvv_debug','01_yt_slice.p
 param.Smin = 1; % 4
 param.Smax = 1; % 9
 param.alpha = 0.03;
-param.lambda = 30;
+param.lambda = 20;
 param.PatchSize = [21,21];
-% param.NumNN = 2;
+param.NumNN = 20;
 param.DeviationsType = 'Geom';
 
 %% run Non Local Variations Alg.
