@@ -1,4 +1,4 @@
-function [new_video, nnf] = update_regular_video(video_regular, video_warped, params)
+function [new_regular_video, nnf, w, res] = update_regular_video(video_regular, video_warped, params)
 % -------------------------------------------------------------------------
 % Updates the regular video and nearest-neighbors database, the
 % warping field is fixed
@@ -33,7 +33,12 @@ for it_inner = 1:params.n_inner_iterations
     new_regular_video = (warped_weight.*single(video_warped) + new_regular_video_weight*single(new_regular_video))./ (warped_weight+new_regular_video_weight);
     new_regular_video = uint8(new_regular_video);
 
-    fprintf('fusing new regular. w_warped = %f | w_new_regular = %f\n', mean(warped_weight(:)), 1/params.knnf.nn_bandwidth^2);
+    fprintf('      w_warped = %f | w_new_regular = %f\n', mean(warped_weight(:)), 1/params.knnf.nn_bandwidth^2);
+
+    res{it_inner}.w = w;
+    res{it_inner}.regular_video = video_regular;
+    res{it_inner}.nnf = nnf;
+    res{it_inner}.new_regular_video = new_regular_video;
 end
 
 end % update_regular_video

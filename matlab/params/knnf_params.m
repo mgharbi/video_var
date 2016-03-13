@@ -8,6 +8,6 @@ function params = knnf_params()
 
     params.verbosity              = 0;
 
-    params.nn_bandwidth = .1;
+    params.nn_bandwidth = .1; % default .1
 
 end % knnf_params

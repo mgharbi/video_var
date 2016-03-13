@@ -25,14 +25,18 @@ for it_outer = 1:params.n_outer_iterations
     params.debug.outer_it = it_outer;
 
     % Regularize video
-    [video_regular, nnf] = update_regular_video(video_regular, video_warped, params);
+    [video_regular, nnf, w, inner_res] = update_regular_video(video_regular, video_warped, params);
     res.video_regular = video_regular;
+    res.nnf = nnf;
+    res.w = w;
+
+    res.iter{it_outer} = inner_res
 
     % warp video towards towards video_regular
     t = tic;
     fprintf('  - Compute warp\t\t');
     % TODO: give an initialization to the warping field
-    warp_field = stwarp(video, video_regular,params.stwarp);
+    warp_field = stwarp(video, video_regular, params.stwarp);
     res.warp_field    = warp_field;
     fprintf('%.1fs.\n', toc(t));
 

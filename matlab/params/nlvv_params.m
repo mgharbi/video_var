@@ -6,5 +6,5 @@ function params = nlvv_params()
     params.n_outer_iterations  = 10; % default 10
     params.n_inner_iterations  = 5;
 
-    params.data_term_weight = 20; % lambda in the paper
+    params.data_term_weight = .2; % lambda in the paper
 end % knnf_params
