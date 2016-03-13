@@ -147,7 +147,6 @@ for i = 1:NumIter
     PsiD = repmat(PsiD,[1,1,3]);
     img_new = (lambda*PsiD.*WarpedImage +  beta * img_new)./ (lambda.*PsiD + beta );
     
-    
     if(i> 1 & mean(abs(img_prev(:)-img_new(:))) < 5e-4)
         break;
     else
