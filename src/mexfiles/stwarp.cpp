@@ -16,7 +16,7 @@ using std::endl;
 typedef float precision_t;
 
 /* The computational routine */
-void stwarp(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, unsigned char *videoB, float *outMatrix, STWarpParams params)
+void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, stwarp_video_t *videoB, float *outMatrix, STWarpParams params)
 {
     // TODO:
     // - pass param struct
@@ -27,14 +27,14 @@ void stwarp(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, uns
 
     warper.setParams(params);
 
-    IVideo A;
+    Video<stwarp_video_t> A;
     int dA[4];
     for (int i = 0; i < 4; ++i) {
         dA[i] = dimsA[i];
     }
     A.initFromMxArray(4, dA, videoA);
 
-    IVideo B;
+    Video<stwarp_video_t> B;
     int dB[4];
     for (int i = 0; i < 4; ++i) {
         dB[i] = dimsB[i];
@@ -43,17 +43,15 @@ void stwarp(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, uns
 
     warper.setVideos(A,B);
     uvw = warper.computeWarp();
-    // uvw.save("test");
     uvw.copyToMxArray(dimsA[0]*dimsA[1]*dimsA[2]*dimsA[3],outMatrix);
-    // uvw.exportSpacetimeMap(params.outputPath, name);
 }
 
 /* The gateway function */
 void mexFunction( int nlhs, mxArray *plhs[],
                   int nrhs, const mxArray *prhs[])
 {
-    unsigned char *videoA;       
-    unsigned char *videoB;      
+    stwarp_video_t *videoA;       
+    stwarp_video_t *videoB;      
     float *outMatrix;  
 
     // - Checks ------------------------------------------------------------------------------
@@ -66,14 +64,14 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("MotionComparison:stwarp:nlhs","One output required.");
     }
     
-    /* make sure the first input argument is type uint8 */
-    if( !mxIsClass(prhs[0], "uint8") || mxIsComplex(prhs[0])) {
-        mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type uint8.");
+    /* make sure the first input argument is type float */
+    if( !mxIsClass(prhs[0], "single") || mxIsComplex(prhs[0])) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type float.");
     }
 
-    /* make sure the second input argument is type uint8 */
-    if( !mxIsClass(prhs[1], "uint8") || mxIsComplex(prhs[1])) {
-        mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type uint8.");
+    /* make sure the second input argument is type float */
+    if( !mxIsClass(prhs[1], "single") || mxIsComplex(prhs[1])) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type float.");
     }
 
     /* make sure the third input argument is the param struct */
@@ -84,8 +82,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
     // - Inputs ------------------------------------------------------------------------------
     
     /* create a pointer to the real data in the input matrix  */
-    videoA = (unsigned char*)mxGetData(prhs[0]);
-    videoB = (unsigned char*)mxGetData(prhs[1]);
+    videoA = (stwarp_video_t*)mxGetData(prhs[0]);
+    videoB = (stwarp_video_t*)mxGetData(prhs[1]);
 
     /* get dimensions of the input matrix */
     if( mxGetNumberOfDimensions(prhs[0]) != 4 || mxGetNumberOfDimensions(prhs[1]) != 4) {

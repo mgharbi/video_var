@@ -11,8 +11,8 @@ class STWarpTest : public testing::Test {
 };
 
 TEST_F(STWarpTest, zero_warp_field) {
-    IVideo A(10,20,30,3);
-    IVideo B(10,20,30,3);
+    Video<stwarp_video_t> A(10,20,30,3);
+    Video<stwarp_video_t> B(10,20,30,3);
 
     WarpingField<float> uvw;
     STWarp<float> warper = STWarp<float>();
@@ -40,8 +40,8 @@ TEST_F(STWarpTest, zero_warp_field) {
 }
 
 TEST_F(STWarpTest, nonzero_warp_field) {
-    IVideo A(10,20,30,3);
-    IVideo B(10,20,30,3);
+    Video<stwarp_video_t> A(10,20,30,3);
+    Video<stwarp_video_t> B(10,20,30,3);
 
     A.setAt(1.0f, 5,10,15,0);
     A.setAt(1.0f, 5,10,15,1);

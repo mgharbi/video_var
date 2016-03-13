@@ -6,10 +6,10 @@ function output = backward_warp(B,w)
     Yb = Y + w(:,:,:,2);
     Zb = Z + w(:,:,:,3);
 
-    out1 = interp3(X,Y,Z,single(B(:,:,:,1)),Xb,Yb,Zb);
-    out2 = interp3(X,Y,Z,single(B(:,:,:,2)),Xb,Yb,Zb);
-    out3 = interp3(X,Y,Z,single(B(:,:,:,3)),Xb,Yb,Zb);
+    out1 = interp3(X,Y,Z,B(:,:,:,1),Xb,Yb,Zb);
+    out2 = interp3(X,Y,Z,B(:,:,:,2),Xb,Yb,Zb);
+    out3 = interp3(X,Y,Z,B(:,:,:,3),Xb,Yb,Zb);
 
-    output = uint8(cat(4,out1,out2,out3));
+    output = cat(4,out1,out2,out3);
 
 end % backward_interpolate

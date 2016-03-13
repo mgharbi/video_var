@@ -129,7 +129,6 @@ for i = 1:NumIter
     W = exp(-0.5*W/prod(PatchSize)/h^2);
     W = bsxfun(@rdivide, W, sum(W, 3));
     
-    
     img_new = ind2ImAvg_mex(im2double(img_DB), int32(squeeze(ann(:,:,1,:))+1), int32(squeeze(ann(:,:,2,:))+1), W,PatchSize(1), PatchSize(2));
     
     

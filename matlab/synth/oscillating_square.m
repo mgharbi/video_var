@@ -9,21 +9,20 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
     % number of frames per cycle
     Nf = numel(frequency_ramp);
 
-    img  = uint8(255*rand(2*rect_hsz(1)+1,2*rect_hsz(2)+1,3));
-    img(:,:,1) = 255;
-    img(:,:,2) = 1;
-    img(:,:,3) = 1;
-    bg  = uint8(zeros(Ny,Nx,1));
-    % bg  = uint8(127*rand(Ny,Nx,1));
+    img  = single(rand(2*rect_hsz(1)+1,2*rect_hsz(2)+1,3));
+    img(:,:,1) = 1;
+    img(:,:,2) = .1;
+    img(:,:,3) = .1;
+    bg  = single(zeros(Ny,Nx,1));
     bg = repmat(bg, [1,1,3]);
-    bg_cube = uint8(255*zeros(Ny,Nx,Nf,1)); 
+    bg_cube = single(zeros(Ny,Nx,Nf,1)); 
     bg_cube = repmat(bg_cube, [1,1,1,3]);
 
 
     % changing the sin freq.
     t = linspace(0,1, Nf);
 
-    video = zeros(Ny,Nx,Nf,3, 'uint8');
+    video = zeros(Ny,Nx,Nf,3, 'single');
 
     offset = MaxAmp*profile(2*pi*frequency_ramp.*t); 
     % offset = MaxAmp*sin(2*pi*frequency_ramp.*t); 

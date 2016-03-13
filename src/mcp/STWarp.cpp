@@ -52,9 +52,9 @@ STWarp<T>::~STWarp() {
 
 
 template <class T>
-void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
-    videoA = new IVideo(A);
-    videoB = new IVideo(B);
+void STWarp<T>::setVideos(const Video<stwarp_video_t> &A, const Video<stwarp_video_t> &B) {
+    videoA = new Video<stwarp_video_t>(A);
+    videoB = new Video<stwarp_video_t>(B);
 
     if(videoA->getHeight()!= videoB->getHeight() ||
         videoA->getWidth() != videoB->getWidth() ||
@@ -130,8 +130,8 @@ void STWarp<T>::setVideos(const IVideo &A, const IVideo &B) {
 
 template <class T>
 void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
-        vector<IVideo*> &pyramidA, 
-        vector<IVideo*> &pyramidB
+        vector<Video<stwarp_video_t>*> &pyramidA, 
+        vector<Video<stwarp_video_t>*> &pyramidB
         ) const{
     int n = pyrSizes.size();
     if(params.verbosity > 0) {
@@ -139,13 +139,13 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
     }
     pyramidA[0] = videoA;
     pyramidB[0] = videoB;
-    IVideo copy;
+    Video<stwarp_video_t> copy;
     for (int i = 1; i < n; ++i) {
         pyramidA[i] = 
-            new IVideo(pyrSizes[i][0],
+            new Video<stwarp_video_t>(pyrSizes[i][0],
             pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
         pyramidB[i] = 
-            new IVideo(pyrSizes[i][0],
+            new Video<stwarp_video_t>(pyrSizes[i][0],
             pyrSizes[i][1],pyrSizes[i][3],dimensions[4]);
 
         // Lowpass and downsample
@@ -218,8 +218,8 @@ WarpingField<T> STWarp<T>::computeWarp() {
     int nLevels = pyrSizes.size();
 
     // Build Pyramids
-    vector<IVideo*> pyramidA(nLevels);
-    vector<IVideo*> pyramidB(nLevels);
+    vector<Video<stwarp_video_t>*> pyramidA(nLevels);
+    vector<Video<stwarp_video_t>*> pyramidB(nLevels);
     buildPyramid(pyrSizes,pyramidA,pyramidB);
 
     WarpingField<T> warpField;
@@ -317,7 +317,7 @@ void STWarp<T>::computePartialDerivatives( const WarpingField<T> &warpField,
     VideoProcessing::dy(*videoB,By,true);
     VideoProcessing::dt(*videoB,Bt,false);
     C.copy(*videoA);
-    IVideo warpedB(videoA->size());
+    Video<stwarp_video_t> warpedB(videoA->size());
     VideoProcessing::backwardWarp(*videoB,warpField,warpedB);
 
     C.subtract(warpedB);

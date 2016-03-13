@@ -82,14 +82,14 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField) {
 
 
     // Compute edge mask
-    IVideo mask;
+    Video<stwarp_video_t> mask;
     VideoProcessing::edges3D(*videoA,mask,0,nDataChan-1,15);
     int dilateSz[3] = {2, 2, 0};
     VideoProcessing::dilate3D(mask, dilateSz);
     // mask.exportVideo(params.outputPath, "denoiseEdgemap");
 
-    const unsigned char *pMask = mask.dataReader();
-    const unsigned char *pA    = videoA->dataReader();
+    const stwarp_video_t *pMask = mask.dataReader();
+    const stwarp_video_t *pA    = videoA->dataReader();
 
     const T* pOrg = orgWarpField.dataReader();
     T* pNew       = warpField.dataWriter();

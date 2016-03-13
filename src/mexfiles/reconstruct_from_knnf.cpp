@@ -4,6 +4,7 @@
 #include "video/Video.hpp"
 #include "video/VideoProcessing.hpp"
 
+#include "mcp/NNField.hpp" 
 #include "mcp/NNReconstruction.hpp" 
 
 #include "mex.h"
@@ -13,11 +14,11 @@ using std::endl;
 
 
 /* The computational routine */
-void reconstruct_from_knnf(const mwSize *dims, const unsigned char* db, 
-        const int32_t *nnf, const float* w, NNReconstructionParams params, uint8_t *outMatrix)
+void reconstruct_from_knnf(const mwSize *dims, const nnf_data_t * db, 
+        const int32_t *nnf, const nnf_data_t* w, NNReconstructionParams params, nnf_data_t *outMatrix)
 {
 
-    IVideo video_db;
+    Video<nnf_data_t> video_db;
     int d[4];
     for (int i = 0; i < 3; ++i) {
         d[i] = dims[i];
@@ -33,7 +34,7 @@ void reconstruct_from_knnf(const mwSize *dims, const unsigned char* db,
     d_nnf[3] = 3*params.knn;
     video_nnf.initFromMxArray(4, d_nnf, nnf);
 
-    Video<float> video_w;
+    Video<nnf_data_t> video_w;
     int d_w[4];
     for (int i = 0; i < 3; ++i) {
         d_w[i] = d[i];
@@ -41,9 +42,8 @@ void reconstruct_from_knnf(const mwSize *dims, const unsigned char* db,
     d_w[3] = params.knn;
     video_w.initFromMxArray(4, d_w, w);
 
-    // IVideo out;
     NNReconstruction recons(&video_db,&video_nnf,&video_w,params);
-    IVideo out = recons.reconstruct();
+    Video<nnf_data_t> out = recons.reconstruct();
 
     out.copyToMxArray(d_nnf[0]*d_nnf[1]*d_nnf[2]*3,outMatrix);
 }
@@ -65,8 +65,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("MotionComparison:reconstruct:nlhs","One outputs required.");
     }
     
-    if( !mxIsClass(prhs[0], "uint8") || mxIsComplex(prhs[0])) {
-        mexErrMsgIdAndTxt("MotionComparison:reconstrucreconstruct:notUint8","Input matrix must be type uint8.");
+    if( !mxIsClass(prhs[0], "single") || mxIsComplex(prhs[0])) {
+        mexErrMsgIdAndTxt("MotionComparison:reconstrucreconstruct:notFloat","Input matrix must be type float.");
     }
 
     if( !mxIsClass(prhs[1], "int32") || mxIsComplex(prhs[1])) {
@@ -85,7 +85,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     // - Inputs ------------------------------------------------------------------------------
     
     /* create a pointer to the real data in the input matrix  */
-    unsigned char *db = (unsigned char*)mxGetData(prhs[0]);
+    nnf_data_t *db = (nnf_data_t*)mxGetData(prhs[0]);
     int32_t *nnf = (int32_t *)mxGetData(prhs[1]);
     float *w = (float *)mxGetData(prhs[2]);
 
@@ -155,9 +155,9 @@ void mexFunction( int nlhs, mxArray *plhs[],
     outSize[1] = dims[1];
     outSize[2] = dims[2];
     outSize[3] = 3;
-    plhs[0] = mxCreateNumericArray(4, outSize, mxUINT8_CLASS, mxREAL);
+    plhs[0] = mxCreateNumericArray(4, outSize, mxSINGLE_CLASS, mxREAL);
     /* get a pointer to the real data in the output matrix */
-    uint8_t *outMatrix = (uint8_t*)mxGetData(plhs[0]);
+    nnf_data_t *outMatrix = (nnf_data_t*)mxGetData(plhs[0]);
 
     // ---------------------------------------------------------------------------------------
 

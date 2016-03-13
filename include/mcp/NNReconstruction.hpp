@@ -2,6 +2,7 @@
 #define NNRECONSTRUCTION_HPP_EAUCSDZ4
 
 #include "video/Video.hpp"
+#include "mcp/NNField.hpp"
 
 typedef struct NNReconstructionParams {
     NNReconstructionParams(int psz_space = 5, int psz_time = 5, int knn = 1, int threads = 16) 
@@ -20,18 +21,18 @@ typedef struct NNReconstructionParams {
 class NNReconstruction
 {
 public:
-    NNReconstruction(const IVideo *db, const Video<int> *nnf, 
+    NNReconstruction(const Video<nnf_data_t> *db, const Video<int> *nnf, 
             const Video<float> *w, NNReconstructionParams p)
         : db_(db), nnf_(nnf), w_(w), params_(p) {};
 
     virtual ~NNReconstruction() {};
 
-    IVideo reconstruct();
-    IVideo reconstruct_gpu();
+    Video<nnf_data_t> reconstruct();
+    Video<nnf_data_t> reconstruct_gpu();
 
 
 private:
-    const IVideo *db_;
+    const Video<nnf_data_t> *db_;
     const Video<int> *nnf_;
     const Video<float> *w_;
     NNReconstructionParams params_;

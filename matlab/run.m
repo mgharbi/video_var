@@ -22,7 +22,7 @@ params.knnf.knn = 3; % default 20
 params.n_outer_iterations  = 1;
 params.n_inner_iterations  = 1; % default 10
 
-params.stwarp.verbosity = 1;
+params.stwarp.verbosity = 0;
 
 % h = figure('Name', '3Dplot', 'Visible', 'off');
 

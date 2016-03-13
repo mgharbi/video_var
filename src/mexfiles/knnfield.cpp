@@ -13,16 +13,16 @@ using std::endl;
 
 
 /* The computational routine */
-void knnfield(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, unsigned char *videoB, NNFieldParams params, int32_t *outMatrix, int32_t * distMatrix)
+void knnfield(const mwSize *dimsA, const mwSize *dimsB, nnf_data_t* videoA, nnf_data_t* videoB, NNFieldParams params, int32_t *outMatrix, nnf_data_t * distMatrix)
 {
-    IVideo A;
+    Video<nnf_data_t> A;
     int dA[4];
     for (int i = 0; i < 4; ++i) {
         dA[i] = dimsA[i];
     }
     A.initFromMxArray(4, dA, videoA);
 
-    IVideo B;
+    Video<nnf_data_t> B;
     int dB[4];
     for (int i = 0; i < 4; ++i) {
         dB[i] = dimsB[i];
@@ -30,12 +30,16 @@ void knnfield(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, u
     B.initFromMxArray(4, dB, videoB);
 
     NNField field(&A,&B, params);
-    Video<int32_t> nnf = field.compute();
+    NNFieldOutput output = field.compute();
+    Video<int32_t> &nnf  = output.nnf;
+    Video<nnf_data_t> &cost  = output.error;
 
     const int32_t* pData = nnf.dataReader();
+    const nnf_data_t* pCost = cost.dataReader();
+
     int channel_stride = nnf.voxelCount();
-    int in_nn_stride = 4*channel_stride;
-    int out_nn_stride = 3*channel_stride;
+    int in_nn_stride   = 3*channel_stride;
+    int out_nn_stride  = 3*channel_stride;
 
 
     for (unsigned int idx = 0; idx < dimsA[0]*dimsA[1]*dimsA[2]; ++idx) // each voxel
@@ -54,7 +58,7 @@ void knnfield(const mwSize *dimsA, const mwSize *dimsB, unsigned char* videoA, u
         for (unsigned int idx = 0; idx < dimsA[0]*dimsA[1]*dimsA[2]; ++idx) // each voxel
         {
             for(int k = 0; k < params.knn; ++ k) { // each NN
-                distMatrix[idx + k*channel_stride] = pData[idx + 3*channel_stride + k*in_nn_stride];
+                distMatrix[idx + k*channel_stride] = pCost[idx + k*channel_stride];
             }
         }
     }
@@ -79,14 +83,14 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("MotionComparison:knnfield:nlhs","One or two outputs required.");
     }
     
-    /* make sure the first input argument is type uint8 */
-    if( !mxIsClass(prhs[0], "uint8") || mxIsComplex(prhs[0])) {
-        mexErrMsgIdAndTxt("MotionComparison:knnfield:notFloat","Input matrix must be type uint8.");
+    /* make sure the first input argument is type float */
+    if( !mxIsClass(prhs[0], "single") || mxIsComplex(prhs[0])) {
+        mexErrMsgIdAndTxt("MotionComparison:knnfield:notFloat","Input matrix must be type float.");
     }
 
-    /* make sure the second input argument is type uint8 */
-    if( !mxIsClass(prhs[1], "uint8") || mxIsComplex(prhs[1])) {
-        mexErrMsgIdAndTxt("MotionComparison:knnfield:notFloat","Input matrix must be type uint8.");
+    /* make sure the second input argument is type float */
+    if( !mxIsClass(prhs[1], "single") || mxIsComplex(prhs[1])) {
+        mexErrMsgIdAndTxt("MotionComparison:knnfield:notFloat","Input matrix must be type float.");
     }
 
     /* make sure the third input argument is the param struct */
@@ -97,8 +101,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
     // - Inputs ------------------------------------------------------------------------------
     
     /* create a pointer to the real data in the input matrix  */
-    unsigned char *videoA = (unsigned char*)mxGetData(prhs[0]);
-    unsigned char *videoB = (unsigned char*)mxGetData(prhs[1]);
+    nnf_data_t *videoA = (nnf_data_t*)mxGetData(prhs[0]);
+    nnf_data_t *videoB = (nnf_data_t*)mxGetData(prhs[1]);
 
     /* get dimensions of the input matrix */
     if( mxGetNumberOfDimensions(prhs[0]) != 4 || mxGetNumberOfDimensions(prhs[1]) != 4) {
@@ -176,11 +180,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
     plhs[0] = mxCreateNumericArray(4, outSize, mxINT32_CLASS, mxREAL);
     int32_t *outMatrix = (int32_t*)mxGetData(plhs[0]);
 
-    int32_t *distMatrix = nullptr;
+    nnf_data_t *distMatrix = nullptr;
     if(nlhs == 2) {
         mwSize outSize2[4] = {dimsA[0], dimsA[1], dimsA[2], (mwSize) params.knn};
-        plhs[1] = mxCreateNumericArray(4, outSize2, mxINT32_CLASS, mxREAL);
-        distMatrix = (int32_t*)mxGetData(plhs[1]);
+        plhs[1] = mxCreateNumericArray(4, outSize2, mxSINGLE_CLASS, mxREAL);
+        distMatrix = (nnf_data_t*)mxGetData(plhs[1]);
     }
 
 

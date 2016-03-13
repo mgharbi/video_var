@@ -31,7 +31,6 @@ for it_inner = 1:params.n_inner_iterations
         repmat(1./robust_cost(video_warped, new_regular_video), [1,1,1,3]);
     new_regular_video_weight = 1/params.knnf.nn_bandwidth^2;
     new_regular_video = (warped_weight.*single(video_warped) + new_regular_video_weight*single(new_regular_video))./ (warped_weight+new_regular_video_weight);
-    new_regular_video = uint8(new_regular_video);
 
     fprintf('      w_warped = %f | w_new_regular = %f\n', mean(warped_weight(:)), 1/params.knnf.nn_bandwidth^2);
 

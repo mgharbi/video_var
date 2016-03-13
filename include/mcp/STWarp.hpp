@@ -26,6 +26,7 @@
 #include "mcp/utils.hpp"
 
 
+typedef float stwarp_video_t;
 typedef multimap<int, pair<int, int> > NeighborhoodType;
 
 using namespace std;
@@ -44,7 +45,7 @@ public:
     void setDefaultParams();
     void setParams(STWarpParams params);
 
-    void setVideos(const IVideo &A, const IVideo &B);
+    void setVideos(const Video<stwarp_video_t> &A, const Video<stwarp_video_t> &B);
 
     void setInitialWarpField(WarpingField<T> initial);
 
@@ -52,8 +53,8 @@ public:
 
     vector<vector<int> > getPyramidSizes() const;
     void buildPyramid(vector<vector<int> > pyrSizes,
-                      vector<IVideo*> &pyramidA,
-                      vector<IVideo*> &pyramidB
+                      vector<Video<stwarp_video_t>*> &pyramidA,
+                      vector<Video<stwarp_video_t>*> &pyramidB
                       ) const;
     void resampleWarpingField( WarpingField<T> &warpField, vector<int> dims ) const;
     void computePartialDerivatives( const WarpingField<T> &warpField, 
@@ -78,8 +79,8 @@ public:
     Video<T> occlusion;
 
 private:
-    IVideo *videoA;
-    IVideo *videoB;
+    Video<stwarp_video_t> *videoA;
+    Video<stwarp_video_t> *videoB;
     WarpingField<T> *initialWarpField;
 
     vector<int> dimensions;

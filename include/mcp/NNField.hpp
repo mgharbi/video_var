@@ -8,6 +8,8 @@
 #include "mcp/WarpingField.hpp"
 #include "video/Video.hpp"
 
+typedef float nnf_data_t;
+
 typedef struct NNFieldParams {
     NNFieldParams(int it = 1, int psz_space = 5, int psz_time = 5,
             int knn = 1, int threads = 16, int verbosity = 1) 
@@ -26,7 +28,17 @@ typedef struct NNFieldParams {
     int verbosity;
 } NNFieldParams;
 
-typedef std::tuple<int,int,int,int> Match; // cost,x,y,t
+typedef struct NNFieldOutput {
+    NNFieldOutput(int h, int w, int nF, int knn) 
+        : nnf(h, w,  nF, 3*knn),
+        error(h, w,  nF, knn)
+    {
+    }
+    Video<int> nnf;
+    Video<nnf_data_t> error;
+} NNFieldReturnOutput ;
+
+typedef std::tuple<nnf_data_t,int,int,int> Match; // cost,x,y,t
 
 typedef struct MatchHash
 {
@@ -53,25 +65,22 @@ typedef std::unordered_set<Match, MatchHash, MatchEqualTo> MatchSet;
 class NNField
 {
 public:
-    NNField (const IVideo *video, const IVideo *database, 
+    NNField (const Video<nnf_data_t> *video, const Video<nnf_data_t> *database, 
         NNFieldParams params = NNFieldParams() ) 
         : video_(video), database_(database), params_(params) {};
     virtual ~NNField ();
 
-    Video<int> compute(); // k-nearest neighbors
+    NNFieldOutput compute(); // k-nearest neighbors
 
 private:
-    const IVideo *video_;
-    const IVideo *database_;
+    const Video<nnf_data_t> *video_;
+    const Video<nnf_data_t> *database_;
 
     NNFieldParams params_;
     int nn_offset_;
 
-    int getPatchCost(const IVideo &A,const IVideo &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b);
-    void improve_guess(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
-        int &y_best, int &x_best, int &t_best, int &cost,
-        int y_p, int x_p, int t_p);
-    void improve_knn(const IVideo &A,const IVideo &B,int y_a, int x_a, int t_a,
+    nnf_data_t getPatchCost(const Video<nnf_data_t> &A,const Video<nnf_data_t> &B, int y_a, int x_a, int t_a, int y_b, int x_b, int t_b);
+    void improve_knn(const Video<nnf_data_t> &A,const Video<nnf_data_t> &B,int y_a, int x_a, int t_a,
         vector<Match> &current_best,
         MatchSet &all_matches,
         int y_p, int x_p, int t_p);

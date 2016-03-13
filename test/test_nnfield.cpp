@@ -11,23 +11,25 @@ class NNFieldTest : public testing::Test {
 };
 
 TEST_F(NNFieldTest, zero_warp_field) {
-    IVideo A(10,20,30,3);
+    Video<nnf_data_t> A(10,20,30,3);
 
-    unsigned char * pData = A.dataWriter();
+    nnf_data_t * pData = A.dataWriter();
     for (int i = 0; i < A.elementCount(); ++i)
     {
         pData[i] = rand() % 255;
     }
 
 
-    IVideo B(A);
+    Video<nnf_data_t> B(A);
 
     NNFieldParams params;
     params.knn = 2;
     params.propagation_iterations = 3;
 
     NNField field(&A, &B, params);
-    Video<int> nnf(std::move(field.compute()));
+    NNFieldOutput output = field.compute();
+    Video<int32_t> &nnf  = output.nnf;
+    // Video<nnf_data_t> &cost  = output.error;
 
     // Check the first match is exact
     for (int i = 0; i < 10-params.patch_size_space; ++i)
@@ -38,7 +40,6 @@ TEST_F(NNFieldTest, zero_warp_field) {
         ASSERT_EQ(nnf.at(i,j,k,0), j);
         ASSERT_EQ(nnf.at(i,j,k,1), i);
         ASSERT_EQ(nnf.at(i,j,k,2), k);
-
     }
 
 }

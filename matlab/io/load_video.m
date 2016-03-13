@@ -24,9 +24,9 @@ function video = load_video(path)
         names  = {files(:).name};
         im1 = imread(fullfile(path, names{1}));
         [h,w,c] = size(im1);
-        video = zeros(h,w,nFrames,c,'uint8');
+        video = zeros(h,w,nFrames,c,'single');
         for f = 1:nFrames
-            frame = imread(fullfile(path, names{f}));
+            frame = im2double(imread(fullfile(path, names{f})));
             video(:,:,f,:) = frame;
         end
         if ~strcmp(ext,'')

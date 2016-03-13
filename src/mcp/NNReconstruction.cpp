@@ -1,9 +1,9 @@
 #include "mcp/NNReconstruction.hpp"
 #include <cassert>
 
-IVideo NNReconstruction::reconstruct() {
+Video<nnf_data_t> NNReconstruction::reconstruct() {
     Video<float> buffer(db_->size());
-    IVideo out(db_->size());
+    Video<nnf_data_t> out(db_->size());
 
     int h  = buffer.getHeight();
     int w  = buffer.getWidth();
