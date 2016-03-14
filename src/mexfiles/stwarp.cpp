@@ -45,14 +45,14 @@ void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, s
     warper.setVideos(A,B);
 
     if(initWarp) {
-        WarpingField<float> initWarp;
+        WarpingField<float> warp;
         int dWF[4];
         for (int i = 0; i < 3; ++i) {
             dWF[i] = dimsA[i];
         }
         dWF[3] = 3;
-        initWarp.initFromMxArray(4, dA, videoA);
-        warper.setInitialWarpField(&initWarp);
+        warp.initFromMxArray(4, dWF, initWarp);
+        warper.setInitialWarpField(warp);
     }
 
     uvw = warper.computeWarp();
@@ -145,6 +145,26 @@ void mexFunction( int nlhs, mxArray *plhs[],
             double val;
             memcpy(&val, mxGetData(current), mxGetElementSize(current));
             params.verbosity = val;
+        }
+        if(strcmp(field_name, "reg_spatial_uv") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.lambda[0] = val;
+        }
+        if(strcmp(field_name, "reg_temporal_uv") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.lambda[1] = val;
+        }
+        if(strcmp(field_name, "reg_spatial_w") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.lambda[2] = val;
+        }
+        if(strcmp(field_name, "reg_temporal_w") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.lambda[3] = val;
         }
     }
 

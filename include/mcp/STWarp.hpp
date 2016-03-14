@@ -47,7 +47,7 @@ public:
 
     void setVideos(const Video<stwarp_video_t> &A, const Video<stwarp_video_t> &B);
 
-    void setInitialWarpField(const WarpingField<T> *initial);
+    void setInitialWarpField(const WarpingField<T> &initial);
 
     WarpingField<T> computeWarp();
 
@@ -81,7 +81,7 @@ public:
 private:
     Video<stwarp_video_t> *videoA;
     Video<stwarp_video_t> *videoB;
-    const WarpingField<T> *initialWarpField;
+    WarpingField<T> *initialWarpField;
 
     vector<int> dimensions;
     STWarpParams params;

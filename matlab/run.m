@@ -18,11 +18,11 @@ params = nlvv_params();
 params.knnf.propagation_iterations = 3;
 params.knnf.patch_size_space = 11;
 params.knnf.patch_size_time = 21;
-params.knnf.knn = 4; % default 20
-params.n_outer_iterations  = 3;
-params.n_inner_iterations  = 5; % default 10
+params.knnf.knn = 5; % default 20
+params.n_outer_iterations  = 5;
+params.n_inner_iterations  = 10; % default 10
 
-params.stwarp.verbosity = 0;
+params.stwarp.verbosity = 1;
 
 % h = figure('Name', '3Dplot', 'Visible', 'off');
 

@@ -46,6 +46,10 @@ overlay = make_overlay(res.video_warped,res.video_regular);
 overlay_yt = video_slice(overlay,2,x_coord);
 imwrite(overlay_yt, fullfile(debugdir,sprintf('overlay_warped_yt.png')));
 
+exagerated = backward_warp(res.video, -2*res.warp_field);
+slice_yt = video_slice(exagerated,2,x_coord);
+imwrite(slice_yt, fullfile(debugdir, 'exagerated_yt.png'));
+
 w = normalize_video(res.w);
 for i = 1:size(res.w,4)
     slice_yt = video_slice(res.w(:,:,:,i),2,x_coord);

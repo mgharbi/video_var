@@ -26,8 +26,8 @@ void STWarp<T>::init() {
 }
 
 template <class T>
-void STWarp<T>::setInitialWarpField(const WarpingField<T> *initial) {
-    initialWarpField = initial;
+void STWarp<T>::setInitialWarpField(const WarpingField<T> &initial) {
+    initialWarpField = new WarpingField<T>(initial);
 }
 
 template <class T>
@@ -41,6 +41,7 @@ STWarp<T>::~STWarp() {
         videoB = nullptr;
     }
     if( initialWarpField != nullptr ){
+        delete initialWarpField;
         initialWarpField = nullptr;
     }
     if(  dimensions.empty() ){
