@@ -16,7 +16,7 @@ TEST_F(NNFieldTest, zero_warp_field) {
     nnf_data_t * pData = A.dataWriter();
     for (int i = 0; i < A.elementCount(); ++i)
     {
-        pData[i] = rand() % 255;
+        pData[i] = (rand() % 255)/255.0;
     }
 
 

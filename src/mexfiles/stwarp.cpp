@@ -16,7 +16,7 @@ using std::endl;
 typedef float precision_t;
 
 /* The computational routine */
-void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, stwarp_video_t *videoB, float *outMatrix, STWarpParams params)
+void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, stwarp_video_t *videoB, float *outMatrix, STWarpParams params, const float* initWarp)
 {
     // TODO:
     // - pass param struct
@@ -41,7 +41,20 @@ void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, s
     }
     B.initFromMxArray(4, dB, videoB);
 
+
     warper.setVideos(A,B);
+
+    if(initWarp) {
+        WarpingField<float> initWarp;
+        int dWF[4];
+        for (int i = 0; i < 3; ++i) {
+            dWF[i] = dimsA[i];
+        }
+        dWF[3] = 3;
+        initWarp.initFromMxArray(4, dA, videoA);
+        warper.setInitialWarpField(&initWarp);
+    }
+
     uvw = warper.computeWarp();
     uvw.copyToMxArray(dimsA[0]*dimsA[1]*dimsA[2]*dimsA[3],outMatrix);
 }
@@ -50,15 +63,11 @@ void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, s
 void mexFunction( int nlhs, mxArray *plhs[],
                   int nrhs, const mxArray *prhs[])
 {
-    stwarp_video_t *videoA;       
-    stwarp_video_t *videoB;      
-    float *outMatrix;  
-
     // - Checks ------------------------------------------------------------------------------
 
     /* check for proper number of arguments */
-    if(nrhs!=3) {
-        mexErrMsgIdAndTxt("MotionComparison:stwarp:nrhs","Three inputs required.");
+    if(nrhs!=3 && nrhs != 4) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:nrhs","Three of four inputs required.");
     }
     if(nlhs!=1) {
         mexErrMsgIdAndTxt("MotionComparison:stwarp:nlhs","One output required.");
@@ -79,11 +88,15 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("MotionComparison:stwarp:notStruct","Input should be a struct.");
     }
 
+    if( nrhs == 4 && (!mxIsClass(prhs[1], "single") || mxIsComplex(prhs[1])) ) {
+        mexErrMsgIdAndTxt("MotionComparison:stwarp:notFloat","Input matrix must be type float.");
+    }
+
     // - Inputs ------------------------------------------------------------------------------
     
     /* create a pointer to the real data in the input matrix  */
-    videoA = (stwarp_video_t*)mxGetData(prhs[0]);
-    videoB = (stwarp_video_t*)mxGetData(prhs[1]);
+    stwarp_video_t *videoA = (stwarp_video_t*)mxGetData(prhs[0]);
+    stwarp_video_t *videoB = (stwarp_video_t*)mxGetData(prhs[1]);
 
     /* get dimensions of the input matrix */
     if( mxGetNumberOfDimensions(prhs[0]) != 4 || mxGetNumberOfDimensions(prhs[1]) != 4) {
@@ -106,6 +119,20 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("MotionComparison:stwarp:wrongNumberOfStructElem","Param struct must have one element");
     }
 
+    float *initWarp = nullptr; 
+    if(nrhs == 4) {
+        const mwSize *dimsWF = mxGetDimensions(prhs[0]);
+        for (int i = 0; i < 3; ++i) {
+            if(dimsA[i] != dimsWF[i]) {
+                mexErrMsgIdAndTxt("MotionComparison:stwarp:sizeMismatch","Inputs must have the same spatial dimensions");
+            }
+        }
+        if(3 != dimsWF[3]) {
+            mexErrMsgIdAndTxt("MotionComparison:stwarp:sizeMismatch","Initial warping field should have 3 channels");
+        }
+        initWarp = (float*)mxGetData(prhs[3]);
+    }
+
     STWarpParams params;
     for (int i = 0; i < nfields; ++i)
     {
@@ -124,6 +151,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     // - Outputs -----------------------------------------------------------------------------
     
     /* create the output matrix */
+    float *outMatrix;  
     plhs[0] = mxCreateNumericArray(4, dimsA, mxSINGLE_CLASS, mxREAL);
 
     /* get a pointer to the real data in the output matrix */
@@ -132,5 +160,5 @@ void mexFunction( int nlhs, mxArray *plhs[],
     // ---------------------------------------------------------------------------------------
 
     /* call the computational routine */
-    stwarp(dimsA, dimsB, videoA, videoB, outMatrix, params);
+    stwarp(dimsA, dimsB, videoA, videoB, outMatrix, params, initWarp);
 }

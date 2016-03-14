@@ -17,10 +17,10 @@ params = nlvv_params();
 % params.knnf.knn = 2;
 params.knnf.propagation_iterations = 3;
 params.knnf.patch_size_space = 11;
-params.knnf.patch_size_time = 17;
+params.knnf.patch_size_time = 21;
 params.knnf.knn = 4; % default 20
 params.n_outer_iterations  = 3;
-params.n_inner_iterations  = 10; % default 10
+params.n_inner_iterations  = 5; % default 10
 
 params.stwarp.verbosity = 0;
 

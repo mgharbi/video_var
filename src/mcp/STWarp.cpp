@@ -26,8 +26,8 @@ void STWarp<T>::init() {
 }
 
 template <class T>
-void STWarp<T>::setInitialWarpField(WarpingField<T> initial) {
-    initialWarpField = new WarpingField<T>(initial);
+void STWarp<T>::setInitialWarpField(const WarpingField<T> *initial) {
+    initialWarpField = initial;
 }
 
 template <class T>
@@ -41,7 +41,6 @@ STWarp<T>::~STWarp() {
         videoB = nullptr;
     }
     if( initialWarpField != nullptr ){
-        delete initialWarpField;
         initialWarpField = nullptr;
     }
     if(  dimensions.empty() ){
@@ -64,8 +63,6 @@ void STWarp<T>::setVideos(const Video<stwarp_video_t> &A, const Video<stwarp_vid
         }
     }
 
-    params.useFeatures = false;
-
     int chan = 3;
 
     // Use gradient features (requires color)
@@ -85,33 +82,21 @@ void STWarp<T>::setVideos(const Video<stwarp_video_t> &A, const Video<stwarp_vid
         Video<T> temp(copyA.size());
 
         VideoProcessing::dx(copyA, temp);
-        temp.scalarAdd(255);
-        temp.scalarMultiply(.5);
         videoA->writeChannel(chan, temp);
 
         VideoProcessing::dy(copyA, temp);
-        temp.scalarAdd(255);
-        temp.scalarMultiply(.5);
         videoA->writeChannel(chan+1, temp);
 
         VideoProcessing::dt(copyA, temp);
-        temp.scalarAdd(255);
-        temp.scalarMultiply(.5);
         videoA->writeChannel(chan+2, temp);
 
         VideoProcessing::dx(copyB, temp);
-        temp.scalarAdd(255);
-        temp.scalarMultiply(.5);
         videoB->writeChannel(chan, temp);
 
         VideoProcessing::dy(copyB, temp);
-        temp.scalarAdd(255);
-        temp.scalarMultiply(.5);
         videoB->writeChannel(chan+1, temp);
 
         VideoProcessing::dt(copyB, temp);
-        temp.scalarAdd(255);
-        temp.scalarMultiply(.5);
         videoB->writeChannel(chan+2, temp);
     }
 
@@ -223,7 +208,11 @@ WarpingField<T> STWarp<T>::computeWarp() {
     buildPyramid(pyrSizes,pyramidA,pyramidB);
 
     WarpingField<T> warpField;
-    initializeWarpField(dimensions, warpField);
+    if(initialWarpField) {
+        warpField = *initialWarpField;
+    } else {
+        initializeWarpField(dimensions, warpField);
+    }
 
     for (int i = nLevels-1; i >= 0 ; --i) {
         videoA = pyramidA[i];

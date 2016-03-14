@@ -30,15 +30,16 @@ for it_outer = 1:params.n_outer_iterations
     res.nnf = nnf;
     res.w = w;
 
-    res.iter{it_outer} = inner_res
+    res.iter{it_outer} = inner_res;
 
     % warp video towards towards video_regular
     t = tic;
     fprintf('  - Compute warp\t\t');
     % TODO: give an initialization to the warping field
-    warp_field = stwarp(video, video_regular, params.stwarp);
+    warp_field = stwarp(video, video_regular, params.stwarp, warp_field);
     res.warp_field    = warp_field;
     fprintf('%.1fs.\n', toc(t));
+    fprintf('    range: %.3f,%.3f\n', min(warp_field(:)), max(warp_field(:)) );
 
     % TODO: set warp field boundaries to 0 and remove inversions
 

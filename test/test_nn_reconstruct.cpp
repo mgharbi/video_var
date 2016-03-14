@@ -28,7 +28,7 @@ TEST_F(NNReconstructTest, simple_nnf) {
     nnf_data_t * pData = db.dataWriter();
     for (int i = 0; i < db.elementCount(); ++i)
     {
-        pData[i] = rand() % 255;
+        pData[i] = (rand() % 255)/255.0;
     }
 
     NNReconstruction recons(&db,&nnf,&weight,params);
