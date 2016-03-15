@@ -88,7 +88,6 @@ private:
 
 
     void init();
-    void initializeWarpField(const vector<int> &dimensions, WarpingField<T> &warpField);
     void computeSmoothCost(const Video<T> &warpDX,
                            const Video<T> &warpDY,
                            const Video<T> &warpDT,

@@ -144,30 +144,6 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
     }
 }
 
-template <class T>
-void STWarp<T>::initializeWarpField(const vector<int> &dimensions,
-        WarpingField<T> &warpField) 
-{
-    if(params.verbosity >0) {
-        printf("+ Generating initial warp field\n");
-    }
-    warpField = WarpingField<T>(dimensions[0], dimensions[1], 
-            dimensions[2], 3);
-
-    // Initialize the time map to be a ramp
-    T* pW = warpField.dataWriter();
-    int nFramesA = videoA->frameCount();
-    int nFramesB = videoB->frameCount();
-    int nVoxels  = videoA->voxelCount();
-    double ratio = ((double) nFramesB - 1) / ((double) nFramesA - 1);
-    for(int k = 0; k<dimensions[2];++k)
-        for(int j = 0; j<dimensions[1];++j)
-            for(int i = 0; i<dimensions[0];++i)
-    {
-        int index = i + dimensions[0]*( j + dimensions[1]*k );
-        pW[index + 2*nVoxels] = (T) ratio*k - k;
-    }
-}
 
 template <class T>
 WarpingField<T> STWarp<T>::computeWarp() {
@@ -195,8 +171,6 @@ WarpingField<T> STWarp<T>::computeWarp() {
                 params.lambda[2],
                 params.lambda[3]);
     }
-
-
     
     // Get dimensions of the pyramid levels
     vector<vector<int> > pyrSizes = getPyramidSizes();
@@ -211,7 +185,11 @@ WarpingField<T> STWarp<T>::computeWarp() {
     if(initialWarpField) {
         warpField = *initialWarpField;
     } else {
-        initializeWarpField(dimensions, warpField);
+        if(params.verbosity >0) {
+            printf("+ Generating initial warp field\n");
+        }
+        warpField = WarpingField<T>(dimensions[0], dimensions[1], 
+                dimensions[2], 3);
     }
 
     for (int i = nLevels-1; i >= 0 ; --i) {
@@ -269,6 +247,7 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
         Video<T> Bt(videoB->size());
         Video<T> C(videoB->size());
         computePartialDerivatives(warpField,Bx,By,Bt,C);
+
         if(params.verbosity >1) {
             printf("done.\n");
         }
@@ -287,8 +266,6 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
 
         // w <- w + dw
         warpField.add(dWarpField);
-        
-
 
         denoiseWarpingField(warpField);
 
@@ -312,11 +289,12 @@ void STWarp<T>::computePartialDerivatives( const WarpingField<T> &warpField,
                                         Video<T> &C) {
     VideoProcessing::dx(*videoB,Bx,true);
     VideoProcessing::dy(*videoB,By,true);
-    VideoProcessing::dt(*videoB,Bt,false);
-    C.copy(*videoA);
-    Video<stwarp_video_t> warpedB(videoA->size());
-    VideoProcessing::backwardWarp(*videoB,warpField,warpedB);
+    VideoProcessing::dt(*videoB,Bt,true);
 
+    Video<stwarp_video_t> warpedB(videoA->size());
+
+    C.copy(*videoA);
+    VideoProcessing::backwardWarp(*videoB,warpField,warpedB);
     C.subtract(warpedB);
     // TODO: out of bounds set to 0
 
@@ -379,11 +357,6 @@ vector<vector<int> > STWarp<T>::getPyramidSizes() const{
     vector<vector<int> > pyrSizes(nPyrLevels);
     vector<int> currDim = dimensions;
     pyrSizes[0] = currDim;
-
-    cout << "nP time " << nPyrLevelsTime << endl;
-    cout << "nP space " << nPyrLevelsSpace << endl;
-    cout << "nP " << nPyrLevels<< endl;
-    cout << "diff " << diff<< endl;
 
     for (int i = 1; i < nPyrLevels; ++i) {
         if(isTimeLonger && i < diff ) { // reduce time dim

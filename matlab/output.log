@@ -699,3 +699,468 @@ nP time 11
 nP space 5
 nP 11
 diff 6
+max flow: 0.4250 flow range: u = -0.002 .. 0.002; v = -0.425 .. 0.259
+max flow: 5.8730 flow range: u = 0.746 .. 4.153; v = 0.746 .. 4.153
+
+ans =
+
+     1
+
+
+ans =
+
+     1
+
+
+freq2 =
+
+    4.3000
+
++ Adding gradient features
+nP time 11
+nP space 5
+nP 11
+diff 6
+max flow: 0.4077 flow range: u = -0.008 .. 0.004; v = -0.307 .. 0.408
+max flow: 6.2316 flow range: u = 0.738 .. 4.406; v = 0.738 .. 4.406
+
+ans =
+
+    0.9995
+
+
+ans =
+
+    0.9995
+
+
+freq2 =
+
+    4.8000
+
++ Adding gradient features
+nP time 12
+nP space 5
+nP 12
+diff 7
+max flow: 0.1160 flow range: u = -0.004 .. 0.007; v = -0.063 .. 0.116
+max flow: 4.4097 flow range: u = 0.000 .. 3.118; v = 0.000 .. 3.118
+
+ans =
+
+    0.9995
+
+
+ans =
+
+    0.9995
+
+
+freq2 =
+
+    4.3000
+
++ Adding gradient features
+nP time 12
+nP space 5
+nP 12
+diff 7
+max flow: 0.1292 flow range: u = -0.004 .. 0.006; v = -0.129 .. 0.108
+max flow: 4.6249 flow range: u = -0.057 .. 3.270; v = -0.057 .. 3.270
+
+ans =
+
+    0.9995
+
+
+ans =
+
+    0.9995
+
+
+freq2 =
+
+    4.3000
+
++ Adding gradient features
+nP time 12
+nP space 5
+nP 12
+diff 7
+max flow: 0.4185 flow range: u = -0.008 .. 0.006; v = -0.348 .. 0.419
+max flow: 6.3236 flow range: u = 0.685 .. 4.471; v = 0.685 .. 4.471
+
+ans =
+
+    0.9995
+
+
+ans =
+
+    0.9995
+
+
+freq2 =
+
+    4.3000
+
++ Adding gradient features
+nP time 12
+nP space 5
+nP 12
+diff 7
+max flow: 1.1331 flow range: u = -0.003 .. 0.003; v = -1.133 .. 0.784
+max flow: 7.4709 flow range: u = 0.335 .. 5.283; v = 0.335 .. 5.283
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
++ Adding gradient features
+nP time 12
+nP space 5
+nP 12
+diff 7
+max flow: 1.1332 flow range: u = -0.003 .. 0.003; v = -1.133 .. 0.788
+max flow: 7.7795 flow range: u = 0.335 .. 5.501; v = 0.335 .. 5.501
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
++ Adding gradient features
+resampling ratio0.352941 0.380952 0.11 
+resampling ratio1.22222 1.25 1.18182 
+resampling ratio1.22727 1.2 1.23077 
+resampling ratio1.22222 1.16667 1.1875 
+resampling ratio1.24242 1.21429 1.21053 
+resampling ratio1.2439 1.23529 1.21739 
+resampling ratio1 1 1.21429 
+resampling ratio1 1 1.23529 
+resampling ratio1 1 1.2381 
+resampling ratio1 1 1.23077 
+resampling ratio1 1 1.25 
+resampling ratio1 1 1.25 
+max flow: 1.1332 flow range: u = -0.003 .. 0.003; v = -1.133 .. 0.788
+max flow: 7.7795 flow range: u = 0.335 .. 5.501; v = 0.335 .. 5.501
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
++ Adding gradient features
+max flow: 1.1332 flow range: u = -0.003 .. 0.003; v = -1.133 .. 0.788
+max flow: 7.7795 flow range: u = 0.335 .. 5.501; v = 0.335 .. 5.501
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.6303 flow range: u = -0.003 .. 0.002; v = -0.630 .. 0.616
+max flow: 6.7112 flow range: u = 0.561 .. 4.746; v = 0.561 .. 4.746
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.3836 flow range: u = -0.003 .. 0.002; v = -0.384 .. 0.355
+max flow: 3.0231 flow range: u = -0.024 .. 2.138; v = -0.024 .. 2.138
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.8291 flow range: u = -0.002 .. 0.006; v = -0.743 .. 0.829
+max flow: 4.1882 flow range: u = -0.002 .. 2.961; v = -0.002 .. 2.961
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.7509 flow range: u = -0.003 .. 0.002; v = -0.432 .. 0.751
+max flow: 6.2774 flow range: u = 0.001 .. 4.439; v = 0.001 .. 4.439
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.8462 flow range: u = -0.003 .. 0.002; v = -0.395 .. 0.846
+max flow: 5.9995 flow range: u = 0.011 .. 4.242; v = 0.011 .. 4.242
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.9223 flow range: u = -0.002 .. 0.002; v = -0.342 .. 0.922
+max flow: 5.9268 flow range: u = 0.019 .. 4.191; v = 0.019 .. 4.191
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 1.4932 flow range: u = -0.009 .. 0.004; v = -1.137 .. 1.493
+max flow: 0.0000 flow range: u = 0.000 .. 0.000; v = 0.000 .. 0.000
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.4843 flow range: u = -0.003 .. 0.004; v = -0.484 .. 0.369
+max flow: 4.0734 flow range: u = 0.023 .. 2.880; v = 0.023 .. 2.880
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.3138 flow range: u = -0.002 .. 0.003; v = -0.244 .. 0.314
+max flow: 5.3342 flow range: u = 0.095 .. 3.772; v = 0.095 .. 3.772
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.3138 flow range: u = -0.002 .. 0.003; v = -0.244 .. 0.314
+max flow: 5.3342 flow range: u = 0.095 .. 3.772; v = 0.095 .. 3.772
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.3435 flow range: u = -0.003 .. 0.004; v = -0.343 .. 0.326
+max flow: 4.7388 flow range: u = 0.141 .. 3.351; v = 0.141 .. 3.351
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 1.2151 flow range: u = -0.021 .. 0.034; v = -0.701 .. 1.215
+max flow: 3.8555 flow range: u = 0.539 .. 2.726; v = 0.539 .. 2.726
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 1.0276 flow range: u = -0.037 .. 0.061; v = -0.715 .. 1.028
+max flow: 4.1040 flow range: u = 0.539 .. 2.902; v = 0.539 .. 2.902
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 0.2690 flow range: u = -0.002 .. 0.004; v = -0.216 .. 0.269
+max flow: 8.6895 flow range: u = -0.007 .. 6.144; v = -0.007 .. 6.144
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 1.0860 flow range: u = -0.003 .. 0.050; v = -0.711 .. 1.086
+max flow: 7.7289 flow range: u = -0.084 .. 5.465; v = -0.084 .. 5.465
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 1.8184 flow range: u = -0.010 .. 0.010; v = -1.818 .. 1.721
+max flow: 7.8936 flow range: u = -4.616 .. 5.582; v = -4.616 .. 5.582
+
+ans =
+
+    0.9704
+
+
+ans =
+
+    0.9704
+
+max flow: 0.7741 flow range: u = -0.000 .. 0.001; v = -0.249 .. 0.774
+max flow: 8.8596 flow range: u = -0.127 .. 6.265; v = -0.127 .. 6.265
+
+ans =
+
+    0.9705
+
+
+ans =
+
+    0.9705
+
+max flow: 1.7193 flow range: u = -0.007 .. 0.002; v = -1.719 .. 0.750
+max flow: 9.3765 flow range: u = -0.049 .. 6.630; v = -0.049 .. 6.630
+
+ans =
+
+    0.9704
+
+
+ans =
+
+    0.9704
+
+max flow: 3.0416 flow range: u = -0.006 .. 0.003; v = -3.042 .. 1.048
+max flow: 10.7826 flow range: u = -7.624 .. 6.857; v = -7.624 .. 6.857
+
+ans =
+
+    0.9704
+
+
+ans =
+
+    0.9704
+
+max flow: 0.9916 flow range: u = -0.004 .. 0.001; v = -0.373 .. 0.992
+max flow: 14.1752 flow range: u = -8.234 .. 10.023; v = -8.234 .. 10.023
+
+ans =
+
+    0.9704
+
+
+ans =
+
+    0.9704
+
+max flow: 0.3915 flow range: u = -0.002 .. 0.001; v = -0.260 .. 0.391
+max flow: 14.3589 flow range: u = -8.337 .. 10.153; v = -8.337 .. 10.153
+
+ans =
+
+    0.9704
+
+
+ans =
+
+    0.9704
+
+max flow: 0.6032 flow range: u = -0.001 .. 0.002; v = -0.336 .. 0.603
+max flow: 14.0113 flow range: u = -9.907 .. 0.115; v = -9.907 .. 0.115
+
+ans =
+
+    0.9692
+
+
+ans =
+
+    0.9692
+
+max flow: 0.3599 flow range: u = -0.003 .. 0.001; v = -0.351 .. 0.360
+max flow: 17.0053 flow range: u = -8.821 .. 12.025; v = -8.821 .. 12.025
+
+ans =
+
+    0.9706
+
+
+ans =
+
+    0.9706
+
+max flow: 1.9683 flow range: u = -0.002 .. 0.002; v = -1.968 .. 0.364
+max flow: 14.5718 flow range: u = -10.304 .. 7.159; v = -10.304 .. 7.159
+
+ans =
+
+    0.9706
+
+
+ans =
+
+    0.9580
+

@@ -10,9 +10,9 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
     Nf = numel(frequency_ramp);
 
     img  = single(rand(2*rect_hsz(1)+1,2*rect_hsz(2)+1,3));
-    img(:,:,1) = 1;
-    img(:,:,2) = .1;
-    img(:,:,3) = .1;
+    % img(:,:,1) = 1;
+    % img(:,:,2) = .1;
+    % img(:,:,3) = .1;
     bg  = single(zeros(Ny,Nx,1));
     bg = repmat(bg, [1,1,3]);
 

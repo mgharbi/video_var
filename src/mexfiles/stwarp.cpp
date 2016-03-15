@@ -226,6 +226,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
             memcpy(&val, mxGetData(current), mxGetElementSize(current));
             params.pyrSpacing = val;
         }
+        if(strcmp(field_name, "regularization_mode") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.decoupleRegularization = val;
+        }
     }
 
     // - Outputs -----------------------------------------------------------------------------
