@@ -166,6 +166,66 @@ void mexFunction( int nlhs, mxArray *plhs[],
             memcpy(&val, mxGetData(current), mxGetElementSize(current));
             params.lambda[3] = val;
         }
+        if(strcmp(field_name, "reg_temporal_w") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.lambda[3] = val;
+        }
+        if(strcmp(field_name, "use_color") == 0) {
+            bool val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.useColor = val;
+        }
+        if(strcmp(field_name, "use_gradients") == 0) {
+            bool val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.useFeatures = val;
+        }
+        if(strcmp(field_name, "limit_update") == 0) {
+            bool val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.limitUpdate = val;
+        }
+        if(strcmp(field_name, "media_filter_size") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.medfiltSize = val;
+        }
+        if(strcmp(field_name, "use_advanced_median") == 0) {
+            bool val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.useAdvancedMedian = val;
+        }
+        if(strcmp(field_name, "pyramid_levels") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            if(val>0) {
+                params.pyrLevels = val;
+                params.autoLevels = false;
+            } else {
+                params.autoLevels = true;
+            }
+        }
+        if(strcmp(field_name, "min_pyramid_size") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.minPyrSize = val;
+        }
+        if(strcmp(field_name, "solver_iterations") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.solverIterations = val;
+        }
+        if(strcmp(field_name, "warping_iterations") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.warpIterations = val;
+        }
+        if(strcmp(field_name, "pyramid_spacing") == 0) {
+            double val;
+            memcpy(&val, mxGetData(current), mxGetElementSize(current));
+            params.pyrSpacing = val;
+        }
     }
 
     // - Outputs -----------------------------------------------------------------------------

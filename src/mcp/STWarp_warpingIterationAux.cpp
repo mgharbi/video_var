@@ -589,8 +589,8 @@ void STWarp<T>::weightedLaplacian(const Video<T>& input, const Video<T>& weight,
     }
 
     for(int k=0;k<nFrames;k++)
-        for(int j=0;j<width;j++)
-            for(int i=0;i<height;i++)
+    for(int j=0;j<width;j++)
+    for(int i=0;i<height;i++)
     {
         // Compute laplacian weighting of the incremental flow
         int index = i + height*( j + width*( k ) );

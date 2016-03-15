@@ -38,12 +38,6 @@ void NNField::improve_knn(const Video<nnf_data_t> &A,const Video<nnf_data_t> &B,
     MatchSet &all_matches,
     int y_p, int x_p, int t_p)
 {
-    // if current pos in hash map, skip
-    // if(all_matches.count(Match(0,x_p,y_p,t_p)) > 0) {
-    //     cout << "skipping " << all_matches.size() << endl;
-    //     return;
-    // }
-
     // compute distance
     int candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
 
@@ -114,8 +108,8 @@ NNFieldOutput NNField::compute() {
                 int index = y + h*(x + w*t);
                 for (int k = 0 ; k < params_.knn; ++ k) {
                     int t_db               = rand() % nF_db_valid;
-                    int x_db               = x ; //rand() % w_db_valid;
-                    int y_db               = y ; // rand() % h_db_valid;
+                    int x_db               = x; //rand() % w_db_valid;
+                    int y_db               = y; //rand() % h_db_valid;
                     pNNF[index + 0*nVoxels + k*nn_offset_] = x_db;
                     pNNF[index + 1*nVoxels + k*nn_offset_] = y_db;
                     pNNF[index + 2*nVoxels + k*nn_offset_] = t_db;

@@ -10,12 +10,12 @@ function output = backward_warp(B,w)
     Zb = Z + w(:,:,:,3);
 
     % Clamp to image boundaries
-    Xb(Xb<1) = 1;
-    Yb(Yb<1) = 1;
-    Zb(Zb<1) = 1;
-    Xb(Xb>width) = width;
-    Yb(Yb>height) = height;
-    Zb(Zb>nF) = nF;
+    % Xb(Xb<1) = 1;
+    % Yb(Yb<1) = 1;
+    % Zb(Zb<1) = 1;
+    % Xb(Xb>width) = width;
+    % Yb(Yb>height) = height;
+    % Zb(Zb>nF) = nF;
 
     out1 = interp3(X,Y,Z,B(:,:,:,1),Xb,Yb,Zb);
     out2 = interp3(X,Y,Z,B(:,:,:,2),Xb,Yb,Zb);

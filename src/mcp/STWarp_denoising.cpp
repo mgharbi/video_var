@@ -15,7 +15,7 @@ template <class T>
 void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField) {
 
    if( params.medfiltSize <= 0) {
-       if(params.verbosity >0) {
+       if(params.verbosity >1) {
             printf("    - no median filtering.\n");
        }
        return;
@@ -24,7 +24,7 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField) {
     WarpingField<T> orgWarpField(warpField);
     warpField.reset(0);
 
-    if(params.verbosity >0) {
+    if(params.verbosity >1) {
         printf("    - median filtering...");
     }
     // Edge agnostic median filtering
@@ -40,13 +40,13 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField) {
     }
 
     if( !params.useAdvancedMedian ){
-        if(params.verbosity >0) {
+        if(params.verbosity >1) {
             printf("done.\n");
         }
         return;
     }
 
-    if(params.verbosity >0) {
+    if(params.verbosity >1) {
         printf("advanced...");
     }
 
@@ -177,7 +177,7 @@ void STWarp<T>::denoiseWarpingField( WarpingField<T> &warpField) {
         }
 
     }
-    if(params.verbosity >0) {
+    if(params.verbosity >1) {
         fprintf(stderr,"done.\n");
     }
 }

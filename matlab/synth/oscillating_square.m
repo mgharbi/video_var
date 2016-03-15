@@ -15,8 +15,9 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
     img(:,:,3) = .1;
     bg  = single(zeros(Ny,Nx,1));
     bg = repmat(bg, [1,1,3]);
-    bg_cube = single(zeros(Ny,Nx,Nf,1)); 
-    bg_cube = repmat(bg_cube, [1,1,1,3]);
+
+    bg_cube = single(zeros(Ny,Nx,1,1)); 
+    bg_cube = repmat(bg_cube, [1,1,Nf,3]);
 
 
     % changing the sin freq.

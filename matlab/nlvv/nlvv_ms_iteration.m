@@ -37,6 +37,7 @@ for it_outer = 1:params.n_outer_iterations
     fprintf('  - Compute warp\t\t');
     % TODO: give an initialization to the warping field
     warp_field = stwarp(video, video_regular, params.stwarp, warp_field);
+    % warp_field = stwarp(video_regular, video, params.stwarp, warp_field);
     res.warp_field    = warp_field;
     fprintf('%.1fs.\n', toc(t));
     fprintf('    range: %.3f,%.3f\n', min(warp_field(:)), max(warp_field(:)) );

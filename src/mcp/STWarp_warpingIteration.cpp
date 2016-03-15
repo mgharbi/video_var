@@ -33,7 +33,7 @@ void STWarp<T>::warpingIteration( const WarpingField<T> &warpField,
     int nFrames    = dimensions[2];
     // int nChannels  = dimensions[3];
 
-    if(params.verbosity >0) {
+    if(params.verbosity > 1) {
         fprintf(stderr, "    - preparing linear system...");
     }
     // Differentiate (u,v,w)+d(u,v,w) in x,y,t
@@ -42,7 +42,6 @@ void STWarp<T>::warpingIteration( const WarpingField<T> &warpField,
     WarpingField<T> warpDT(warpField.size());
     WarpingField<T> warpTotal(warpField);
     warpTotal.add(dWarpField);
-
 
     VideoProcessing::dx(warpTotal,warpDX);
     VideoProcessing::dy(warpTotal,warpDY);
@@ -78,17 +77,17 @@ void STWarp<T>::warpingIteration( const WarpingField<T> &warpField,
     prepareLinearSystem(Bx, By, Bt, C, lapl, dataCost, 
                         CBx, CBy, CBt, Bx2, By2, Bt2,
                         Bxy, Bxt, Byt);
-    if(params.verbosity >0) {
+    if(params.verbosity > 1) {
         fprintf(stderr, "done.\n");
     }
 
-    if(params.verbosity >0) {
+    if(params.verbosity > 1) {
         fprintf(stderr, "    - SOR...");
     }
     sor( dataCost, smoothCost, lapl,
          CBx, CBy, CBt, Bx2,
          By2, Bt2, Bxy, Bxt, Byt, dWarpField);
-    if(params.verbosity >0) {
+    if(params.verbosity > 1) {
         fprintf(stderr, "done.\n");
     }
 }

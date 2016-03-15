@@ -106,8 +106,7 @@ void STWarp<T>::setVideos(const Video<stwarp_video_t> &A, const Video<stwarp_vid
     dimensions[0] = sz.height;
     dimensions[1] = sz.width;
     dimensions[2] = sz.nFrames;
-    dimensions[3] = videoB->frameCount();
-    dimensions[4] = sz.nChannels;
+    dimensions[3] = sz.nChannels;
 
     if(params.verbosity > 0) {
         printf("done.\n");
@@ -129,10 +128,10 @@ void STWarp<T>::buildPyramid(vector<vector<int> > pyrSizes,
     for (int i = 1; i < n; ++i) {
         pyramidA[i] = 
             new Video<stwarp_video_t>(pyrSizes[i][0],
-            pyrSizes[i][1],pyrSizes[i][2],dimensions[4]);
+            pyrSizes[i][1],pyrSizes[i][2],dimensions[3]);
         pyramidB[i] = 
             new Video<stwarp_video_t>(pyrSizes[i][0],
-            pyrSizes[i][1],pyrSizes[i][3],dimensions[4]);
+            pyrSizes[i][1],pyrSizes[i][2],dimensions[3]);
 
         // Lowpass and downsample
         copy.copy(*pyramidA[i-1]);
@@ -232,6 +231,12 @@ WarpingField<T> STWarp<T>::computeWarp() {
         // computeUVW
         multiscaleIteration(warpField);
 
+        if(params.verbosity >0) {
+            printf("  x[%.4f, %.4f] ", warpField.min(0), warpField.max(0));
+            printf("  y[%.4f, %.4f] ", warpField.min(1), warpField.max(1));
+            printf("  t[%.4f, %.4f]\n", warpField.min(2), warpField.max(2));
+        }
+
         // Cleanup allocated videos
         if (i != 0) {
             if( videoA != nullptr ){
@@ -251,12 +256,12 @@ WarpingField<T> STWarp<T>::computeWarp() {
 template <class T>
 void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
     for (int warpIter = 0; warpIter < params.warpIterations; ++warpIter) {
-        if(params.verbosity >0) {
+        if(params.verbosity > 1) {
             printf("  - warp iteration %02d\n",warpIter+1);
         }
 
         // Get derivatives
-        if(params.verbosity >0) {
+        if(params.verbosity > 1) {
             printf("    - computing derivatives...");
         }
         Video<T> Bx(videoB->size());
@@ -264,7 +269,7 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
         Video<T> Bt(videoB->size());
         Video<T> C(videoB->size());
         computePartialDerivatives(warpField,Bx,By,Bt,C);
-        if(params.verbosity >0) {
+        if(params.verbosity >1) {
             printf("done.\n");
         }
 
@@ -274,7 +279,7 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
         warpingIteration(warpField, Bx, By, Bt, C, dWarpField);
 
         if (params.limitUpdate) {
-            if(params.verbosity >0) {
+            if(params.verbosity > 1) {
                 printf("    - limiting warp update to [-1,1]");
             }
             dWarpField.clamp(-1,1);
@@ -282,6 +287,8 @@ void STWarp<T>::multiscaleIteration(WarpingField<T> &warpField) {
 
         // w <- w + dw
         warpField.add(dWarpField);
+        
+
 
         denoiseWarpingField(warpField);
 
@@ -333,44 +340,65 @@ void STWarp<T>::computePartialDerivatives( const WarpingField<T> &warpField,
  */
 template <class T>
 vector<vector<int> > STWarp<T>::getPyramidSizes() const{
+    // TODO: for now we assume inputs have same number of frames
+    int spatial_extent = max(dimensions[0], dimensions[1]);
+    bool isTimeLonger = spatial_extent < dimensions[2];
+
+    // Reduce the longuest dimension first
+
     int pyrLevels[3];
     if (params.autoLevels) {
+        if(params.verbosity > 0) {
+            printf("+ Automatic pyramid levels\n");
+        }
         for (int i = 0; i < 2; ++i) {
             pyrLevels[i] = 1 + ( 
                     log( ( (double)dimensions[i] ) /params.minPyrSize )/
                     log( params.pyrSpacing )
             );
         }
-        pyrLevels[2] = 1 + ( 
-                log( ( (double)min(dimensions[2],dimensions[3]) )/( 10 ) )/
+        pyrLevels[2] =  1 + ( 
+                log( ( (double)dimensions[2] )/params.minPyrSize  )/
                 log( params.pyrSpacing )
         );
-        // pyrLevels[2] = 0;
     }else{
-        for (int i = 0; i < 3; ++i) {
+        if(params.verbosity > 0) {
+            printf("+ Manual pyramid levels: %d\n", params.pyrLevels);
+        }
+        for (int i = 0; i < 2; ++i) {
             pyrLevels[i] = params.pyrLevels;
         }
+        pyrLevels[2] = 1;
     }
 
     int nPyrLevelsSpace = max(min(pyrLevels[0], pyrLevels[1]),1);
-    int nPyrLevelsTime = max(pyrLevels[2],0);
-    vector<vector<int> > pyrSizes(nPyrLevelsSpace+nPyrLevelsTime);
+    int nPyrLevelsTime  = max(pyrLevels[2],1);
+    int nPyrLevels      = max(nPyrLevelsTime, nPyrLevelsSpace);
+    int diff            = abs(nPyrLevelsTime - nPyrLevelsSpace);
+
+    vector<vector<int> > pyrSizes(nPyrLevels);
     vector<int> currDim = dimensions;
     pyrSizes[0] = currDim;
-    // Spatial downsizing
-    for (int i = 1; i < nPyrLevelsSpace; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
-            currDim[j] = floor( currDim[j]/params.pyrSpacing );
+
+    cout << "nP time " << nPyrLevelsTime << endl;
+    cout << "nP space " << nPyrLevelsSpace << endl;
+    cout << "nP " << nPyrLevels<< endl;
+    cout << "diff " << diff<< endl;
+
+    for (int i = 1; i < nPyrLevels; ++i) {
+        if(isTimeLonger && i < diff ) { // reduce time dim
+            currDim[2] = ceil( currDim[2]/params.pyrSpacing );
+        } else if(!isTimeLonger && i < diff) { // reduce space dims
+            currDim[0] = ceil( currDim[0]/params.pyrSpacing );
+            currDim[1] = ceil( currDim[1]/params.pyrSpacing );
+        } else { // reduce all
+            currDim[0] = ceil( currDim[0]/params.pyrSpacing );
+            currDim[1] = ceil( currDim[1]/params.pyrSpacing );
+            currDim[2] = ceil( currDim[2]/params.pyrSpacing );
         }
         pyrSizes[i] = currDim;
     }
-    // Additional temporal downsize
-    for (int i = nPyrLevelsSpace; i < nPyrLevelsSpace+nPyrLevelsTime; ++i) {
-        for (size_t j = 2; j < 4; ++j) {
-            currDim[j] = floor( currDim[j]/params.pyrSpacing );
-        }
-        pyrSizes[i] = currDim;
-    }
+
     return pyrSizes;
 }
 

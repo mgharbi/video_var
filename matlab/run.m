@@ -22,7 +22,7 @@ params.knnf.knn = 5; % default 20
 params.n_outer_iterations  = 5;
 params.n_inner_iterations  = 10; % default 10
 
-params.stwarp.verbosity = 1;
+params.stwarp.verbosity = 0;
 
 % h = figure('Name', '3Dplot', 'Visible', 'off');
 
@@ -48,7 +48,10 @@ sl = video_slice(video,2,round((size(video,2)+1)/2));
 imwrite(sl, fullfile(params.debug.output, debug_path('yt_slice.png')));
 
 size(video)
+t = tic;
 res = nlvv(video,params);
+t = toc(t);
+res.time = t;
 
 res.video = video;
 res.params = params;
