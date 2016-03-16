@@ -26,11 +26,16 @@ params.stwarp.verbosity = 0;
 
 % h = figure('Name', '3Dplot', 'Visible', 'off');
 
+h = 71;
+w = 71;
+ph = 21;
+pw = 21;
+amp = 5;
+nframes = 150;
+freq1 = 0.05;
+freq2 = 0.06;
 rng(0);
-nframes = 80;
-freq1 = 3;
-freq2 = 5;
-video = oscillating_square([51,21],[3,1],linspace(freq1, freq2, nframes),5);
+video = oscillating_square([h,w],[ph,pw],linspace(freq1, freq2, nframes),amp);
 mid = round(size(video,2)/2);
 
 % params.plot3d = h;

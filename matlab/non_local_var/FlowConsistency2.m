@@ -20,7 +20,7 @@ vx = filter2(hx, v);
 vy = filter2(hy, v);
 map_init = (1+ux) .* (1+vy) - vx.*uy;
 map_init(1:10,:)=0; map_init(:,1:10)=0; map_init(end-9:end,:)=0; map_init(:,end-9:end)=0;
-se = strel('disk',8);
+se = strel(ones(8,8,8));
 map_final = map_init;
 h = fspecial('gaussian', 10, 2);
 if ShowRes

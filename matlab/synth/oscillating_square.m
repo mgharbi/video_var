@@ -1,10 +1,7 @@
 function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
-
-
     % image dimensions
     Ny = sz(1);
     Nx = sz(2);
-
 
     % number of frames per cycle
     Nf = numel(frequency_ramp);
@@ -21,11 +18,21 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
 
 
     % changing the sin freq.
-    t = linspace(0,1, Nf);
+    t = 1:Nf;
+    n_cycles = 5;
 
     video = zeros(Ny,Nx,Nf,3, 'single');
 
-    offset = MaxAmp*profile(2*pi*frequency_ramp.*t); 
+    t_start = 15;
+    circular_coordinate = frequency_ramp.*(t-t_start);
+
+    t_stop = find(circular_coordinate>=n_cycles,1);
+    circular_coordinate(circular_coordinate>n_cycles) = 0;
+    circular_coordinate(1:t_start) = 0;
+    circular_coordinate = 2*pi*circular_coordinate;
+
+    offset = MaxAmp*profile(circular_coordinate); 
+
     % offset = MaxAmp*sin(2*pi*frequency_ramp.*t); 
 
     midx = Nx-1/2;
@@ -33,12 +40,12 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
     minx = round((Nx+1)/2 - rect_hsz(2))*ones(Nf,1);
     maxx = round((Nx+1)/2 + rect_hsz(2))*ones(Nf,1);
     miny = round((Ny+1)/2 - rect_hsz(1) + offset);
-    maxy   = round((Ny+1)/2 + offset + rect_hsz(1));
+    maxy = round((Ny+1)/2 + offset + rect_hsz(1));
 
     ref_frame = bg;
     ref_frame(miny(1):maxy(1), minx(1):maxx(1), :) = img;
 
-    for f=1:Nf;
+    for f=t_start:t_stop;
         frame = imtranslate(ref_frame,[0,offset(f)],'method', 'linear');
         % frame = bg;
         % frame(miny(f):maxy(f), minx(f):maxx(f), :) = img;

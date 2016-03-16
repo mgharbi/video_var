@@ -18,10 +18,6 @@ typedef float precision_t;
 /* The computational routine */
 void stwarp(const mwSize *dimsA, const mwSize *dimsB, stwarp_video_t * videoA, stwarp_video_t *videoB, float *outMatrix, STWarpParams params, const float* initWarp)
 {
-    // TODO:
-    // - pass param struct
-    // - pass videos
-    // - return stwarp
     WarpingField<precision_t> uvw;
     STWarp<precision_t> warper = STWarp<precision_t>();
 
