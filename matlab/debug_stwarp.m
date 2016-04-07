@@ -11,18 +11,20 @@ if exist(debugdir,'dir')
 end
 mkdir(debugdir)
 
-h = 71;
-w = 71;
-ph = 21;
-pw = 21;
-amp = 5;
+h       = 71;
+w       = 71;
+ph      = 21;
+pw      = 21;
+amp     = 5;
 nframes = 150;
-freq1 = 0.05;
-freq2 = 0.06;
+freq1   = 0.05;
+freq2   = 0.06;
+tstart = 15;
+n_cycles = 5;
 rng(0);
-video = oscillating_square([h,w],[ph,pw],linspace(freq1, freq2, nframes),amp);
+video = oscillating_square([h,w],[ph,pw],linspace(freq1, freq2, nframes),amp, tstart, n_cycles);
 rng(0);
-video_regular = oscillating_square([h,w],[ph,pw],linspace(freq1, freq1, nframes),amp);
+video_regular = oscillating_square([h,w],[ph,pw],linspace(freq1, freq1, nframes),amp, tstart, n_cycles);
 
 [h,w,nC,nF] = size(video);
 x_coord = floor(w/2);

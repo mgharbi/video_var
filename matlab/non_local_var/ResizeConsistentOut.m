@@ -24,12 +24,12 @@ yT = 1:(1/toScale):Q;
 
 padsize = 0;
 
- padsize = ceil(max(1,max(abs(R-max(xT(:))), abs(Q-max(yT(:))))));
- img_in = padarray(img_in, [padsize padsize], 'replicate', 'post');
+padsize = ceil(max(1,max(abs(R-max(xT(:))), abs(Q-max(yT(:))))));
+img_in = padarray(img_in, [padsize padsize], 'replicate', 'post');
 
 
 [xFrom, yFrom] = meshgrid(1:(1/fromScale):R+padsize*(1/fromScale),1:(1/fromScale):Q+padsize*(1/fromScale));
-[xTo, yTo] = meshgrid(1:(1/toScale):R+padsize*(1/toScale),1:(1/toScale):Q+padsize*(1/toScale));
+[xTo, yTo]     = meshgrid(1:(1/toScale):R+padsize*(1/toScale),1:(1/toScale):Q+padsize*(1/toScale));
 
 % Resample
 img_out = zeros([size(xTo), K]);
@@ -41,7 +41,6 @@ end
 
 for k=1:K
     for l = 1:L
-        
         img_out(:,:,k,l) = interp2(xFrom,yFrom,img_b(:,:,k,l) , xTo,yTo,'spline');
     end
 end
