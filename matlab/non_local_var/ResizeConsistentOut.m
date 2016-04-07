@@ -5,6 +5,7 @@ R = FinestLevelSize(2);
 K = size(img_in, 3);
 L = size(img_in, 4);
 [Qi, Ri, ~, ~] = size(img_in);
+
 % Prepare antialiasing filter
 samplingRatio = toScale / fromScale;
 if samplingRatio < 1
