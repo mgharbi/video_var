@@ -1,4 +1,4 @@
 globals = init();
 
-t = KNNfieldTest;
-t(4).run();
+t = ConsistentVideoResizeTest;
+t(1).run();

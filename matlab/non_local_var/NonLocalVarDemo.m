@@ -8,8 +8,8 @@ addpath(genpath(cd),1);
 img = im2double(imread('images/corn.png'));
 
 %% set parameters
-param.Smin = 1; % 4
-param.Smax = 1; % 9
+param.Smin = 4; % 4
+param.Smax = 9; % 9
 param.alpha = 0.03;
 param.lambda = 30;
 param.DeviationsType = 'Geom';

@@ -1,4 +1,4 @@
-function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
+function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, t_start, n_cycles, fig)
     % image dimensions
     Ny = sz(1);
     Nx = sz(2);
@@ -19,11 +19,9 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
 
     % changing the sin freq.
     t = 1:Nf;
-    n_cycles = 5;
 
     video = zeros(Ny,Nx,Nf,3, 'single');
 
-    t_start = 15;
     circular_coordinate = frequency_ramp.*(t-t_start);
 
     t_stop = find(circular_coordinate>=n_cycles,1);
@@ -54,7 +52,7 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, fig)
 
     video(video==0) = bg_cube(video == 0);
 
-    if nargin >= 5
+    if nargin >= 6
         tplot = 1:Nf;
         fprintf('* Making 3d plot\n');
         figure(fig);
