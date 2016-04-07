@@ -8,7 +8,7 @@ function params = nlvv_params()
 
     params.data_term_weight = .2; % lambda in Tali's paper
 
-    params.pyramid_spacing  = 1.25;
+    params.pyramid_ratio  = 0.75;
     params.scale_min  = 4;
     params.scale_max  = 9;
 end % knnf_params
