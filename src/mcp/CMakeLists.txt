@@ -13,6 +13,7 @@ set(libmcp_src
 
 cuda_compile(mcp_cuda
     NNReconstruction.cu
+    NNField.cu
 )
 
 add_library(mcp SHARED 

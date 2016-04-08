@@ -71,6 +71,7 @@ public:
     virtual ~NNField ();
 
     NNFieldOutput compute(); // k-nearest neighbors
+    NNFieldOutput compute_gpu(); // k-nearest neighbors
 
 private:
     const Video<nnf_data_t> *video_;

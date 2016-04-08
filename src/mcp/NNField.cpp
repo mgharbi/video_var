@@ -76,11 +76,11 @@ NNFieldOutput NNField::compute() {
     int nF_db = database_->frameCount(); int nF_db_valid = nF_db  - params_.patch_size_time + 1;
 
     
+    // Prepare output buffers
     NNFieldOutput output(h,w,nF, params_.knn);
-
-    Video<int> &nnf = output.nnf;
+    Video<int> &nnf          = output.nnf;
     Video<nnf_data_t> &error = output.error;
-    nn_offset_ = 3*nVoxels;
+    nn_offset_               = 3*nVoxels;
 
     #if defined(_OPENMP)
         int n_threads = 1;

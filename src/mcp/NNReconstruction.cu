@@ -1,6 +1,6 @@
 #include <cuda.h>
-
 #include "cuda_utils.h"
+
 #include "mcp/NNReconstruction.hpp"
 
 
@@ -73,18 +73,15 @@ Video<nnf_data_t> NNReconstruction::reconstruct_gpu() {
     int nC = db_->channelCount();
 
     int knn = params_.knn;
-
     int psz_space = params_.patch_size_space;
     int psz_time  = params_.patch_size_time;
 
     int nVoxels = h*w*nF;
 
-    // Copy buffers to GPU
+    // Copy input buffers to GPU
     int* nnf_d           = nullptr;
     float* weights_d     = nullptr;
     nnf_data_t* db_d     = nullptr;
-    nnf_data_t* buffer_d = nullptr;;
-    int* aggregation_d   = nullptr;;
 
     int sz_nnf = h*w*nF*3*knn*sizeof(int);
     cudaMalloc((void**) &nnf_d, sz_nnf);
@@ -98,11 +95,15 @@ Video<nnf_data_t> NNReconstruction::reconstruct_gpu() {
     cudaMalloc((void**) &db_d, sz_db);
     cudaMemcpy(db_d, db_->dataReader(),sz_db, cudaMemcpyHostToDevice);
 
-    // Output buffers
+    // Allocate GPU output buffers
+    nnf_data_t* buffer_d = nullptr;;
+    int* aggregation_d   = nullptr;;
+
     int sz_buffer = h*w*nF*nC*sizeof(nnf_data_t);
-    int sz_aggreg = h*w*nF*1*sizeof(int);
     cudaMalloc((void**) &buffer_d, sz_buffer);
     cudaMemset(buffer_d, 0, sz_buffer);
+
+    int sz_aggreg = h*w*nF*1*sizeof(int);
     cudaMalloc((void**) &aggregation_d, sz_aggreg);
     cudaMemset(aggregation_d, 0, sz_aggreg);
 
