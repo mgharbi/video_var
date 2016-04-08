@@ -20,7 +20,7 @@ video_current = video;
 video_regular = [];
 warp_field    = [];
 
-finest_res = [h,w,nF];
+finest_res = [h,w,nframes];
 
 scales = params.scale_max:-1:params.scale_min;
 ref_scale = [1.0, 1.0, 1.0];
@@ -37,12 +37,15 @@ for lvl = scales
         dst_scale = ref_scale*(params.pyramid_ratio)^lvl;
         video_regular = consistent_video_resize(video_regular, src_scale, dst_scale, finest_res); 
         warp_field = consistent_video_resize(warp_field, src_scale, dst_scale, finest_res); 
-        warp_field = warp_field*1/params.pyramid_ratio
+        warp_field = warp_field*1/params.pyramid_ratio;
     end
 
     % Process this scale
     res = nlvv_ms_iteration(video_current,params,...
             video_regular, warp_field);
+    video_regular = res.video_regular;
+    video_warped  = res.video_warped;
+    warp_field    = res.warp_field;
 
     % TODO: save_upsized_maps
 end

@@ -12,7 +12,8 @@ else
     video_warped = backward_warp(video, warp_field);
 end
 
-if isempty(video_regular) 
+propagate_regular = 0;
+if ~propagate_regular || isempty(video_regular) 
     display('* Initialize regular video');
     video_regular = video_warped;
 end

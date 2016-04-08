@@ -52,7 +52,7 @@ function video = oscillating_square(sz, rect_hsz, frequency_ramp, MaxAmp, t_star
 
     video(video==0) = bg_cube(video == 0);
 
-    if nargin >= 6
+    if nargin >= 7
         tplot = 1:Nf;
         fprintf('* Making 3d plot\n');
         figure(fig);

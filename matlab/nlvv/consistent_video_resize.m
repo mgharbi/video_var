@@ -39,7 +39,6 @@ in = padarray(in, [padsize_y, padsize_x, padsize_t, 0], 'replicate', 'post');
 
 % AA Prefilter
 sampling_ratio = dst_scale ./ src_scale;
-sampling_ratio
 if min(sampling_ratio) < 1
     sigma = sqrt(-2*log(exp(-1))) ./ (sampling_ratio * pi);
     for c = 1:nCi
@@ -55,5 +54,9 @@ end
 
 % Remove padding
 out =  out(1:end-padsize_y, 1:end-padsize_x,1:end-padsize_t,:);
+
+if isa(in,'single')
+    out = single(out);
+end
 
 end % consistent_image_resize

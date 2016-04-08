@@ -9,6 +9,6 @@ function params = nlvv_params()
     params.data_term_weight = .2; % lambda in Tali's paper
 
     params.pyramid_ratio  = 0.75;
-    params.scale_min  = 4;
-    params.scale_max  = 9;
+    params.scale_min  = 0;
+    params.scale_max  = 4;
 end % knnf_params

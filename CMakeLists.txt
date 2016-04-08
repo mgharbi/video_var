@@ -14,7 +14,7 @@ find_package(OpenMP QUIET)
 find_package(CUDA QUIET REQUIRED)
 
 if(CUDA_FOUND)
-    list(APPEND CUDA_NVCC_FLAGS "--compiler-options;-O2;-DVERBOSE")
+    list(APPEND CUDA_NVCC_FLAGS "--compiler-options;-O3;-DVERBOSE;-std=c++11")
 endif(CUDA_FOUND)
 
 if(OPENMP_FOUND)

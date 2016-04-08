@@ -14,22 +14,21 @@ globals = init();
 
 params = nlvv_params();
 
-% params.knnf.knn                  = 2;
-params.knnf.propagation_iterations = 3;
-params.knnf.patch_size_space       = 11;
-params.knnf.patch_size_time        = 21;
-params.knnf.knn                    = 5; % default 20
-params.n_outer_iterations          = 1;
-params.n_inner_iterations          = 1; % default 10
+% params.knnf.propagation_iterations = 3;
+% params.knnf.patch_size_space       = 11;
+% params.knnf.patch_size_time        = 21;
+% params.knnf.knn                    = 5; % default 20
+% params.n_outer_iterations          = 1;
+% params.n_inner_iterations          = 1; % default 10
 
 params.stwarp.verbosity = 0;
 
 % h = figure('Name', '3Dplot', 'Visible', 'off');
 
-h        = 41;
-w        = 41;
-ph       = 11;
-pw       = 11;
+h        = 71;
+w        = 71;
+ph       = 21;
+pw       = 21;
 amp      = 5;
 nframes  = 150;
 freq1    = 0.05;
@@ -38,17 +37,14 @@ tstart   = 15;
 n_cycles = 5;
 rng(0);
 video = oscillating_square([h,w],[ph,pw],linspace(freq1, freq2, nframes),amp,tstart, n_cycles);
-mid = round(size(video,2)/2);
-
-% params.plot3d = h;
 
 % Reset debug dir
 params.debug.output = fullfile(globals.path.output,'nlvv_debug');
-% if exist(params.debug.output,'dir')
-%     try
-%         rmdir(params.debug.output, 's');
-%     end
-% end
+if exist(params.debug.output,'dir')
+    try
+        rmdir(params.debug.output, 's');
+    end
+end
 
 save_video(video, fullfile(params.debug.output, debug_path('input.mp4')), false);
 sl = video_slice(video,2,round((size(video,2)+1)/2));

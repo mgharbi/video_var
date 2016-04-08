@@ -39,11 +39,12 @@ Video<nnf_data_t> NNReconstruction::reconstruct() {
             for (int y = 0; y < psz_space; ++y)
             {
                 for (int c = 0; c < nC; ++c) {
-                    buffer.at(voxel+y,x,t,c) +=  weight*((float)db_->at(target_y+y,target_x+x,target_t+t,c));
+                    buffer.at(voxel+y,x,t,c) +=  
+                        weight*((float)db_->at(target_y+y,target_x+x,target_t+t,c));
                 }
                 aggregation_count.at(voxel+y,x,t,0) += 1;
-            }
-        }
+            } // patch pixel loop
+        } // knn loop
     }
 
     // Normalize by the number of patches influencing each pixel
