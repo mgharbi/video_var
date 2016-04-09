@@ -12,13 +12,14 @@ typedef float nnf_data_t;
 
 typedef struct NNFieldParams {
     NNFieldParams(int it = 1, int psz_space = 5, int psz_time = 5,
-            int knn = 1, int threads = 16, int verbosity = 1) 
+            int knn = 1, int threads = 16, int verbosity = 1, int jump_flood_step = 8) 
         : propagation_iterations(it), 
           patch_size_space(psz_space),
           patch_size_time(psz_time),
           knn(knn),
           threads(threads),
-          verbosity(verbosity)
+          verbosity(verbosity),
+          jump_flood_step(jump_flood_step)
     {}
     int propagation_iterations;
     int patch_size_space;
@@ -26,6 +27,7 @@ typedef struct NNFieldParams {
     int knn;
     int threads;
     int verbosity;
+    int jump_flood_step;
 } NNFieldParams;
 
 typedef struct NNFieldOutput {

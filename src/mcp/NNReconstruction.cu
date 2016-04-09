@@ -1,6 +1,6 @@
 #include <cuda.h>
-#include "cuda_utils.h"
 
+#include "cuda/utils.h"
 #include "mcp/NNReconstruction.hpp"
 
 
@@ -19,7 +19,6 @@ __global__ void reconstruct_kernel(int nVoxels,
 ) 
 {
     // y,x,t,c
-
     // idx = y + x*h + h*w*t;
     CUDA_KERNEL_LOOP(voxel, nVoxels) {
         int vx_t = voxel/(h*w);

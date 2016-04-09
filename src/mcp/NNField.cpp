@@ -39,9 +39,9 @@ void NNField::improve_knn(const Video<nnf_data_t> &A,const Video<nnf_data_t> &B,
     int y_p, int x_p, int t_p)
 {
     // compute distance
-    int candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
+    nnf_data_t candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
 
-    int err = std::get<0>(current_best[0]);
+    nnf_data_t err = std::get<0>(current_best[0]);
 
     if( candidate_dist < err) { // we have a better match
         MatchSet ms = all_matches;
@@ -108,8 +108,8 @@ NNFieldOutput NNField::compute() {
                 int index = y + h*(x + w*t);
                 for (int k = 0 ; k < params_.knn; ++ k) {
                     int t_db               = rand() % nF_db_valid;
-                    int x_db               = x; //rand() % w_db_valid;
-                    int y_db               = y; //rand() % h_db_valid;
+                    int x_db               = rand() % w_db_valid;
+                    int y_db               = rand() % h_db_valid;
                     pNNF[index + 0*nVoxels + k*nn_offset_] = x_db;
                     pNNF[index + 1*nVoxels + k*nn_offset_] = y_db;
                     pNNF[index + 2*nVoxels + k*nn_offset_] = t_db;
@@ -237,14 +237,10 @@ NNFieldOutput NNField::compute() {
                 }
 
                 // Random search new guesses
-                int rs_start = numeric_limits<int>::max();
-                int rt_start = numeric_limits<int>::max();
+                int rs_start = max(w, h); 
+                int rt_start = nF;
 
-                if (rs_start > max(w, h)) { rs_start = max(w, h); }
-                if (rt_start > nF) { rt_start = nF; }
-
-                // int mag_time = rt_start;
-                int mag = 0; // rs_start;
+                int mag =  rs_start;
                 int mag_time = rt_start;
                 while (mag >= 1 || mag_time >= 1)
                 {
@@ -298,18 +294,18 @@ NNFieldOutput NNField::compute() {
         } // parallel 
 
         // Display matching cost
-        const int* pCost = nnf.dataReader() + 3*nVoxels;
-        vector<nnf_data_t> avg_cost(params_.knn);
-        for (int k = 0; k < params_.knn; ++k)
-        for (int i = 0; i < nVoxels; ++i)
-        {
-            avg_cost[k] += (float) pCost[i+k*nVoxels];
-        }
-        for (int k = 0; k < params_.knn; ++k)
-        {
-            avg_cost[k] /= nVoxels;
-            if(params_.verbosity > 0) {
-                cout << "    match cost [" << k << "] : " << avg_cost[k] << endl;;
+        if(params_.verbosity > 0) {
+            const nnf_data_t* pCost = error.dataReader();
+            vector<nnf_data_t> avg_cost(params_.knn);
+            for (int k = 0; k < params_.knn; ++k)
+            for (int i = 0; i < nVoxels; ++i)
+            {
+                avg_cost[k] += (float) pCost[i+k*nVoxels];
+            }
+            for (int k = 0; k < params_.knn; ++k)
+            {
+                avg_cost[k] /= nVoxels;
+                    cout << "    match cost [" << k << "] : " << avg_cost[k] << endl;;
             }
         }
 
