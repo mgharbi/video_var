@@ -114,6 +114,7 @@ Video<nnf_data_t> NNReconstruction::reconstruct_gpu() {
         psz_space, psz_time,
         buffer_d, aggregation_d
     );
+    cudaDeviceSynchronize();
 
     // // Normalize
     normalize_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
@@ -121,6 +122,7 @@ Video<nnf_data_t> NNReconstruction::reconstruct_gpu() {
         buffer_d, aggregation_d,
         h, w, nF, nC, knn
     );
+    cudaDeviceSynchronize();
 
     // Copy buffer back to host
     Video<nnf_data_t> out(db_->size());
