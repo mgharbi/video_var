@@ -107,7 +107,7 @@ Video<nnf_data_t> NNReconstruction::reconstruct_gpu() {
     cudaMemset(aggregation_d, 0, sz_aggreg);
 
     // Aggregate
-    reconstruct_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
+    reconstruct_kernel<<<GPU_GET_BLOCKS(nVoxels), GPU_THREADS>>>(
         nVoxels,
         nnf_d, weights_d, db_d,
         h, w, nF, nC, knn,
@@ -117,7 +117,7 @@ Video<nnf_data_t> NNReconstruction::reconstruct_gpu() {
     cudaDeviceSynchronize();
 
     // // Normalize
-    normalize_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
+    normalize_kernel<<<GPU_GET_BLOCKS(nVoxels), GPU_THREADS>>>(
         nVoxels,
         buffer_d, aggregation_d,
         h, w, nF, nC, knn

@@ -124,9 +124,6 @@ NNFieldOutput NNField::compute() {
         } // x loop
     } // t loop
 
-    // FIXME: remove
-    return output;
-
     for (int iter = 0; iter < params_.propagation_iterations; ++iter) 
     {
         if(params_.verbosity > 0) {

@@ -5,14 +5,24 @@
 #include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
+// #include <math_functions.h>
 #include <thrust/execution_policy.h>
 #include <thrust/reduce.h>
 #include <thrust/sort.h>
 
 #include "cuda/utils.h"
+#include "cuda/error_check.h"
 #include "mcp/NNField.hpp"
 
 // ---- GPU datastructures ---------------------------------------
+
+__device__ dim3 get_patch_coord(int linear, int d1, int d2) {
+    dim3 out(0,0,0);
+    out.z = linear/ (d1*d2);
+    out.y = (linear% (d1*d2)) / d1;
+    out.x = linear% d1;
+    return out;
+}
 
 typedef struct MatchGPU {
     __host__ __device__ MatchGPU(nnf_data_t cost, int x, int y, int t) :
@@ -142,17 +152,16 @@ __global__ void initialize_kernel(int nVoxels,
         int nC, int knn,
         int psz_space, int psz_time,
         curandState *rng_state,
-        // MatchGPU* bestmatches
         int* nnf,
-        int* cost
+        nnf_data_t* cost
 ) 
 {
-    // y,x,t,c
-    // idx = y + x*h + h*w*t;
     CUDA_KERNEL_LOOP(voxel, nVoxels) {
-        int vx_t = voxel/(h*w);
-        int vx_x = (voxel % (h*w)) / h ;
-        int vx_y = voxel % h;
+        dim3 xyt = get_patch_coord(voxel, h, w);
+        int vx_x = xyt.x;
+        int vx_y = xyt.y;
+        int vx_t = xyt.z;
+
         if( vx_t >= nF-psz_time+1 || 
             vx_x >= w-psz_space+1 ||
             vx_y >= h-psz_space+1
@@ -163,64 +172,102 @@ __global__ void initialize_kernel(int nVoxels,
         // Copy PRNG state to local memory
         curandState state = rng_state[voxel];
 
-        // // Copy patch
-        // for (int t = 0; t < psz_time; ++t) 
-        // for (int x = 0; x < psz_space; ++x) 
-        // for (int y = 0; y < psz_space; ++y) 
-        // {
-        //     int vx_video = y+vx_y + h*( x+vx_x + w*(t+vx_t));
-        //     int vx_db = y+y_db + h*( x+x_db + w*(t+t_db));
-        //     for( int c = 0 ; c < nC ; c++ ){
-        //         nnf_data_t d = (float)video[vx_video+c*h*w*nF] - (float)db[vx_db+c*h*w*nF];
-        //         cost += d*d;
-        //     }
-        // }
-        //
-        // __shared__ nnf_data_t patch[11*11*11*3];
-        // nnf_data_t *patch = new nnf_data_t[psz_time*psz_space*psz_space*nC];
         for (int k = 0; k < knn; ++k) {
             int t_db = curand_uniform(&state) * nF_db_valid;
             int x_db = curand_uniform(&state) * w_db_valid;
             int y_db = curand_uniform(&state) * h_db_valid;
-            nnf[voxel*3*(knn+1) + k + 0] = x_db;
-            nnf[voxel*3*(knn+1) + k + 1] = y_db;
-            nnf[voxel*3*(knn+1) + k + 2] = t_db;
-            // cost[voxel*(knn+1) + k] = 
-            //     d_patch_cost(video, db, h, w, nF, nC,
-            //         vx_y,vx_x,vx_t, y_db,x_db,t_db,
-            //         psz_space, psz_time);
-
-            // bestmatches[voxel*(knn+1) + k].x = x_db;
-            // bestmatches[voxel*(knn+1) + k].y = y_db;
-            // bestmatches[voxel*(knn+1) + k].t = t_db;
-            // bestmatches[voxel*(knn+1) + k].cost = 
-            //     d_patch_cost(video, db, h, w, nF, nC,
-            //         vx_y,vx_x,vx_t, y_db,x_db,t_db,
-            //         psz_space, psz_time);
-
-            float c = 0;
-            for (int t = 0; t < psz_time; ++t) 
-            for (int x = 0; x < psz_space; ++x) 
-            for (int y = 0; y < psz_space; ++y) 
-            {
-                // int vx_video = y+vx_y + h*( x+vx_x + w*(t+vx_t));
-                // int vx_patch = y+vx_y + psz_space*( x + vx_x + psz_space*(t+vx_t));
-                int vx_db = y+y_db + h*( x+x_db + w*(t+t_db));
-                for( int c = 0 ; c < nC ; c++ ){
-                    // nnf_data_t d = patch[0]-(float)db[vx_db+c*h*w*nF];
-                    // nnf_data_t d = video[vx_video+c*h*w*nF] - db[vx_db+c*h*w*nF];
-                    c += d*d;
-                }
-            }
-            cost[voxel*(knn+1) + k]= c;
+            nnf[ voxel*3*knn + 3*k + 0 ] = x_db;
+            nnf[ voxel*3*knn + 3*k + 1 ] = y_db;
+            nnf[ voxel*3*knn + 3*k + 2 ] = t_db;
         } // knn loop
-        // delete[] patch;
-
-        // thrust::sort(thrust::seq, bestmatches+voxel*(knn+1),bestmatches+voxel*(knn+1) +knn, MatchGPUCompare());
 
         // Copy back PRNG state to global memory
         rng_state[voxel] = state;
-    } // buffer px cudaloop
+    }
+}
+
+
+__global__ void update_cost(int nVoxels,
+        const nnf_data_t* video,
+        const nnf_data_t* db,
+        int h, int w, int nF,
+        int h_db_valid, int w_db_valid, int nF_db_valid, 
+        int nC, int knn,
+        int psz_space, int psz_time,
+        curandState *rng_state,
+        int* nnf,
+        nnf_data_t* cost
+) 
+{
+    int vx_x = blockIdx.x;
+    int vx_y = blockIdx.y;
+    int vx_t = blockIdx.z;
+
+    // if( vx_t >= nF-psz_time+1 || 
+    //     vx_x >= w-psz_space+1 ||
+    //     vx_y >= h-psz_space+1
+    // ) { // Out of bound
+    //     return;
+    // }
+
+    int tid      = threadIdx.x;
+    int stride   = blockDim.x;
+    int n_passes = ceil(((float) psz_space*psz_space*psz_time ) / stride);
+    int psz      = psz_space*psz_space*psz_time;
+
+    __shared__ float c;
+    __shared__ nnf_data_t patch[TILE_W*TILE_H*3];
+    __shared__ int neighbors[32*3];
+
+    int voxel = vx_y + h*(vx_x + w*vx_t);
+
+    // Fill in neighbors
+    if (tid < knn) {
+        neighbors[3*tid + 0] = nnf[voxel*3*knn + 3*tid + 0];
+        neighbors[3*tid + 1] = nnf[voxel*3*knn + 3*tid + 1];
+        neighbors[3*tid + 2] = nnf[voxel*3*knn + 3*tid + 2];
+        cost[voxel*knn + tid] = 0;
+    }
+
+    // Fill in patch in shared memory
+    for (int pass = 0; pass < n_passes; ++pass)
+    {
+        if(tid+pass*stride > psz) {
+            continue;
+        }
+        dim3 xyt = get_patch_coord(tid + pass*stride,psz_space,psz_space);
+        for( int chan = 0 ; chan < nC ; chan++ ){
+            int vx_video = xyt.y+vx_y + h*( xyt.x+vx_x + w*(xyt.z+vx_t));
+            patch[xyt.y+TILE_H*(xyt.x+TILE_W*chan)] = video[vx_video+chan*h*w*nF];
+        }
+    }
+
+    for (int pass = 0; pass < n_passes; ++pass)
+    {
+        if(tid+pass*stride > psz) {
+            continue;
+        }
+        dim3 xyt = get_patch_coord(tid + pass*stride, psz_space, psz_space);
+        for (int k = 0; k < knn; ++k) {
+             // zero out the aggregator
+            if (tid == 0) {
+                c = 0;
+            }
+            __syncthreads();
+                int x_db = neighbors[3*k + 0];
+                int y_db = neighbors[3*k + 1];
+                int t_db = neighbors[3*k + 2];
+
+                int vx_db = xyt.y+y_db + h*( xyt.x+x_db + w*(xyt.z+t_db));
+                for( int chan = 0 ; chan < nC ; chan++ ){
+                    nnf_data_t d = patch[xyt.y + TILE_H*(xyt.x  +TILE_W*chan)] 
+                        - db[vx_db + chan*h*w*nF];
+                    c+= d*d;
+                }
+            __syncthreads();
+            cost[voxel*knn + k] += c;
+        } // knn loop
+    } // pass
 }
 
 
@@ -305,105 +352,92 @@ __global__ void pm_propag_kernel(int nVoxels,
         int h_db_valid, int w_db_valid, int nF_db_valid, 
         int nC, int knn,
         int psz_space, int psz_time,
-        MatchGPU* bestmatches,
-        MatchGPU* bestmatches_tmp,
+        int *nnf_d, nnf_data_t *cost_d,
+        int *nnf_tmp_d, nnf_data_t *cost_tmp_d,
         int jump
 ) 
 {
-    // y,x,t,c
-    // idx = y + x*h + h*w*t;
-    CUDA_KERNEL_LOOP(voxel, nVoxels) {
-        int vx_t = voxel/(h*w);
-        int vx_x = (voxel % (h*w)) / h ;
-        int vx_y = voxel % h;
-        if( vx_t >= nF-psz_time+1 || 
-            vx_x >= w-psz_space+1 ||
-            vx_y >= h-psz_space+1
-        ) { // Out of bound
-            return;
-        }
+    // NOTE: assumes the kernel is realized on the correct domain
+    int vx_x = blockIdx.x;
+    int vx_y = blockIdx.y;
+    int vx_t = blockIdx.z;
 
-        // Fetch best (from tmp: we want to use the previous iteration to avoid race cditions)
-        MatchGPU *current_best = bestmatches + (knn+1)*voxel; // 1 extra for insertion/deletion
+    int tid      = threadIdx.x;
+    int stride   = blockDim.x;
+    int psz      = psz_space*psz_space*psz_time;
+    int n_passes = ceil(((float) psz ) / stride);
 
-        // Propagate x
-        if(vx_x - jump >= 0) {
-            int voxel_p = voxel - jump*h;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x + jump;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(x_p < w_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
-        if(vx_x + jump < w) {
-            int voxel_p = voxel + jump*h;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x - jump;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(x_p >= 0 && x_p < w_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
+    extern __shared__ int shared_ptr[];
+    int knn_offset = psz_space*psz_space*psz_time*nC;
+    int cost_offset = 3*knn;
+    nnf_data_t *patch = (nnf_data_t*) shared_ptr;
+    int *best_matches = (int*)(patch+knn_offset);
+    nnf_data_t *best_costs = (nnf_data_t*)(best_matches+cost_offset);
 
-        // Propagate y
-        if(vx_y - jump >= 0) {
-            int voxel_p = voxel - jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y + jump;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(y_p < h_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
-        if(vx_y + jump < h) {
-            int voxel_p = voxel + jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y - jump;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(y_p >= 0 && y_p < h_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
+    int voxel = vx_y + h*(vx_x + w*vx_t);
 
-        // Propagate t
-        if(vx_t - jump >= 0) {
-            int voxel_p = voxel - h*w*jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t + jump;
-                if(t_p < nF_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
+    // Fill in current best NN
+    if(tid < knn) {
+        best_matches[3*tid + 0] = 0;
+        best_matches[3*tid + 1] = 0;
+        best_matches[3*tid + 2] = 0;
+        best_costs[tid] = 0;
+    }
+
+    // Fill in patch in shared memory
+    for (int pass = 0; pass < n_passes; ++pass)
+    {
+        if(tid+pass*stride > psz) {
+            continue;
+        }
+        dim3 xyt = get_patch_coord(tid + pass*stride,psz_space,psz_space);
+        for( int chan = 0 ; chan < nC ; chan++ ){
+            int vx_video = voxel + xyt.y + h*( xyt.x + w*xyt.z);
+            patch[xyt.y + psz_space*(xyt.x+psz_space*chan)] = video[vx_video + chan*h*w*nF];
+        }
+    }
+    __syncthreads();
+
+    // Propagate x
+    if(vx_x - jump >= 0) {
+        int voxel_p = voxel - jump*h;
+        for (int k = 0; k < knn; ++k) { // get k next neighbors
+            int x_p = best_matches[voxel_p*knn + 3*k + 0] + jump;
+            int y_p = best_matches[voxel_p*knn + 3*k + 1];
+            int t_p = best_matches[voxel_p*knn + 3*k + 2];
+            if(x_p < w_db_valid) {
+                d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
+                    vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
             }
         }
-        if(vx_t + jump < nF) {
-            int voxel_p = voxel + h*w*jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t - jump;
-                if(t_p >= 0 && t_p < nF_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
-    } // buffer px cudaloop
+    }
+
+    // for (int pass = 0; pass < n_passes; ++pass)
+    // {
+    //     if(tid+pass*stride > psz) {
+    //         continue;
+    //     }
+    //     dim3 xyt = get_patch_coord(tid + pass*stride, psz_space, psz_space);
+    //     for (int k = 0; k < knn; ++k) {
+    //          // zero out the aggregator
+    //         if (tid == 0) {
+    //             c = 0;
+    //         }
+    //         __syncthreads();
+    //             int x_db = neighbors[3*k + 0];
+    //             int y_db = neighbors[3*k + 1];
+    //             int t_db = neighbors[3*k + 2];
+    //
+    //             int vx_db = xyt.y+y_db + h*( xyt.x+x_db + w*(xyt.z+t_db));
+    //             for( int chan = 0 ; chan < nC ; chan++ ){
+    //                 nnf_data_t d = patch[xyt.y + TILE_H*(xyt.x  +TILE_W*chan)] 
+    //                     - db[vx_db + chan*h*w*nF];
+    //                 c+= d*d;
+    //             }
+    //         __syncthreads();
+    //         cost[voxel*knn + k] += c;
+    //     } // knn loop
+    // } // pass
 }
 
 
@@ -435,19 +469,20 @@ NNFieldOutput NNField::compute_gpu() {
     cudaMalloc((void**) &db_d, sz_db);
     cudaMemcpy(db_d, database_->dataReader(),sz_db, cudaMemcpyHostToDevice);
 
-    // Allocate GPU output buffers
-    MatchGPU* best_match_d     = nullptr;
-    MatchGPU* best_match_tmp_d = nullptr;
-    int sz_bestmatches         = h*w*nF*(knn+1)*sizeof(MatchGPU);
-    cudaMalloc((void**) &best_match_d, sz_bestmatches);
-    cudaMalloc((void**) &best_match_tmp_d, sz_bestmatches);
-
-    int* nnf_d     = nullptr;
-    int* cost_d     = nullptr;
-    int sz_nnf         = h*w*nF*3*(knn+1)*sizeof(int);
-    int sz_cost         = h*w*nF*1*(knn+1)*sizeof(int);
+    int* nnf_d         = nullptr;
+    nnf_data_t* cost_d = nullptr;
+    int* nnf_tmp_d         = nullptr;
+    nnf_data_t* cost_tmp_d = nullptr;
+    int sz_nnf         = h*w*nF*3*knn*sizeof(int);
+    int sz_cost        = h*w*nF*knn*sizeof(nnf_data_t);
     cudaMalloc((void**) &nnf_d, sz_nnf);
     cudaMalloc((void**) &cost_d, sz_cost);
+    cudaMemset(nnf_d, 0, sz_cost);
+    cudaMemset(cost_d, 0, sz_cost);
+    cudaMalloc((void**) &nnf_tmp_d, sz_nnf);
+    cudaMalloc((void**) &cost_tmp_d, sz_cost);
+    cudaMemset(nnf_tmp_d, 0, sz_nnf);
+    cudaMemset(cost_tmp_d, 0, sz_cost);
 
     // init
     if(params_.verbosity > 0) {
@@ -458,15 +493,9 @@ NNFieldOutput NNField::compute_gpu() {
     // Prepare random number generator
     curandState *d_state;
     cudaMalloc(&d_state, nVoxels*sizeof(curandState));
-    setup_rng_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(nVoxels, d_state);
+    setup_rng_kernel<<<GPU_GET_BLOCKS(nVoxels), GPU_THREADS>>>(nVoxels, d_state);
 
-
-    const int TILE_W = 16;
-    const int TILE_H = 16;
-    dim3 threadsPerBlock(TILE_W,TILE_H);
-    dim3 numBlocks(w/threadsPerBlock.x, h/threadsPerBlock.y);
-    initialize_kernel<<<numBlocks, threadsPerBlock>>>(
-    // initialize_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
+    initialize_kernel<<<GPU_GET_BLOCKS(nVoxels), GPU_THREADS>>>(
             nVoxels,
             video_d,
             db_d,
@@ -477,55 +506,79 @@ NNFieldOutput NNField::compute_gpu() {
             d_state,
             nnf_d,
             cost_d
-            // best_match_d
     );
-    // cudaDeviceSynchronize();
+    dim3 tpb_cost(GPU_THREADS, 1, 1); // threads per block
+    dim3 nb_cost(w_valid, h_valid, nF_valid); // number of blocks
+    size_t shared_memory_cost = (knn+1)*3*sizeof(int);
+    update_cost<<<nb_cost, tpb_cost>>>(
+            nVoxels,
+            video_d,
+            db_d,
+            h, w, nF,
+            h_db_valid, w_db_valid, nF_db_valid, 
+            nC, knn,
+            psz_space, psz_time,
+            d_state,
+            nnf_d,
+            cost_d
+    );
+    cudaDeviceSynchronize();
+    CudaCheckError();
 
-    // for (int iter = 0; iter < params_.propagation_iterations; ++iter) 
-    // {
-    //     if(params_.verbosity > 0) {
-    //         printf("  - iteration %d/%d\n", iter+1,params_.propagation_iterations);
-    //     }
-    //
-    //     // Jump-flood propagation
-    //     for(int jump_flood_step = params_.jump_flood_step ; jump_flood_step > 0; jump_flood_step /= 2) {
-    //         if(params_.verbosity > 1) {
-    //             printf("    jump flood with step %d\n", jump_flood_step);
-    //         }
-    //
-    //         // swap buffers (copy to tmp)
-    //         cudaMemcpy(best_match_tmp_d, best_match_d, sz_bestmatches, cudaMemcpyDeviceToDevice);
-    //
-    //         // flood, nnf_tmp is the nnf of the previous iteration, nnf is being updated
-    //         pm_propag_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
-    //                 nVoxels,
-    //                 video_d,
-    //                 db_d,
-    //                 h, w, nF,
-    //                 h_db_valid, w_db_valid, nF_db_valid, 
-    //                 nC, knn,
-    //                 psz_space, psz_time,
-    //                 best_match_d,
-    //                 best_match_tmp_d,
-    //                 jump_flood_step
-    //         );
-    //         cudaDeviceSynchronize();
-    //     } // jump flood
-    //
-    //     // Random sampling pass
-    //     pm_rs_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
-    //             nVoxels,
-    //             video_d,
-    //             db_d,
-    //             h, w, nF,
-    //             h_db_valid, w_db_valid, nF_db_valid, 
-    //             nC, knn,
-    //             psz_space, psz_time,
-    //             d_state,
-    //             best_match_d
-    //     );
-    //     cudaDeviceSynchronize();
-    // } // propagation iteration
+    for (int iter = 0; iter < params_.propagation_iterations; ++iter) 
+    {
+        if(params_.verbosity > 0) {
+            printf("  - iteration %d/%d\n", iter+1,params_.propagation_iterations);
+        }
+
+        // Jump-flood propagation
+        for(int jump_flood_step = 1 ; jump_flood_step > 0; jump_flood_step /= 2) {
+        // for(int jump_flood_step = params_.jump_flood_step ; jump_flood_step > 0; jump_flood_step /= 2) {
+            if(params_.verbosity > 1) {
+                printf("    jump flood with step %d\n", jump_flood_step);
+            }
+
+            // swap buffers (copy to tmp)
+            cudaMemcpy(nnf_tmp_d, nnf_d, sz_nnf, cudaMemcpyDeviceToDevice);
+            cudaMemcpy(cost_tmp_d, cost_d, sz_cost, cudaMemcpyDeviceToDevice);
+
+            // flood, nnf_tmp is the nnf of the previous iteration, nnf is being updated
+            dim3 tpb_propag(GPU_THREADS, 1, 1); // threads per block
+            dim3 nb_propag(w_valid, h_valid, nF_valid); // number of blocks
+            size_t shared_memory_propag = 
+                psz_space*psz_space*psz_time*nC*sizeof(nnf_data_t)
+                + 3*knn*sizeof(int)
+                + knn*sizeof(nnf_data_t);
+            pm_propag_kernel<<<nb_propag, tpb_propag, shared_memory_propag>>>(
+                    nVoxels,
+                    video_d,
+                    db_d,
+                    h, w, nF,
+                    h_db_valid, w_db_valid, nF_db_valid, 
+                    nC, knn,
+                    psz_space, psz_time,
+                    nnf_d, cost_d,
+                    nnf_tmp_d, cost_tmp_d,
+                    jump_flood_step
+            );
+            cudaDeviceSynchronize();
+            CudaCheckError();
+        } // jump flood
+
+        // // Random sampling pass
+        // pm_rs_kernel<<<MCP_GPU_GET_BLOCKS(nVoxels), MCP_GPU_NUM_THREADS>>>(
+        //         nVoxels,
+        //         video_d,
+        //         db_d,
+        //         h, w, nF,
+        //         h_db_valid, w_db_valid, nF_db_valid, 
+        //         nC, knn,
+        //         psz_space, psz_time,
+        //         d_state,
+        //         best_match_d
+        // );
+        // cudaDeviceSynchronize();
+    } // propagation iteration
 
     // Prepare host output buffers
     NNFieldOutput output(h,w,nF, knn);
@@ -533,27 +586,17 @@ NNFieldOutput NNField::compute_gpu() {
     Video<nnf_data_t> &error = output.error;
 
     // Copy buffers back to host
-    MatchGPU *best_match = new MatchGPU[h*w*nF*(knn+1)]();
-    cudaMemcpy(best_match, best_match_d, sz_bestmatches, cudaMemcpyDeviceToHost);
-    for (int voxel = 0; voxel < h*w*nF; ++voxel)
-    {
-        for (int k = 0; k < knn; ++k)
-        {
-            MatchGPU m = best_match[voxel*(knn+1) + k];
-            nnf.setAt(m.x, voxel, 0, 0, 3*k+0 );
-            nnf.setAt(m.y, voxel, 0, 0, 3*k+1 );
-            nnf.setAt(m.t, voxel, 0, 0, 3*k+2);
-            error.setAt(m.cost, voxel, 0, 0, k);
-        }
-    }
-    delete[] best_match;
+    cudaMemcpy(nnf.dataWriter(), nnf_d, sz_nnf, cudaMemcpyDeviceToHost);
+    cudaMemcpy(error.dataWriter(), cost_d, sz_cost, cudaMemcpyDeviceToHost);
 
     // Cleanup
-    cudaFree(d_state);          d_state          = nullptr;
-    cudaFree(best_match_d);     best_match_d     = nullptr;
-    cudaFree(best_match_tmp_d); best_match_tmp_d = nullptr;
-    cudaFree(video_d);          video_d          = nullptr;
-    cudaFree(db_d);             db_d             = nullptr;
+    cudaFree(d_state);   d_state    = nullptr;
+    cudaFree(nnf_d);     nnf_d      = nullptr;
+    cudaFree(nnf_tmp_d); nnf_tmp_d  = nullptr;
+    cudaFree(cost_d);    cost_d     = nullptr;
+    cudaFree(cost_tmp_d);cost_tmp_d = nullptr;
+    cudaFree(video_d);   video_d    = nullptr;
+    cudaFree(db_d);      db_d       = nullptr;
 
     return output;
 }
