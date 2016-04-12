@@ -1,3 +1,4 @@
+    // END
     // y,x,t,c
     // idx = y + x*h + h*w*t;
     CUDA_KERNEL_LOOP(voxel, nVoxels) {
@@ -11,84 +12,50 @@
             return;
         }
 
-        // Fetch best (from tmp: we want to use the previous iteration to avoid race cditions)
+        // Fetch best
         MatchGPU *current_best = bestmatches + (knn+1)*voxel; // 1 extra for insertion/deletion
+        
+        // Copy PRNG state to local memory
+        curandState state = rng_state[voxel];
 
-        // Propagate x
-        if(vx_x - jump >= 0) {
-            int voxel_p = voxel - jump*h;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x + jump;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(x_p < w_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
-        if(vx_x + jump < w) {
-            int voxel_p = voxel + jump*h;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x - jump;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(x_p >= 0 && x_p < w_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
+        int rs_start = max(w, h); 
+        int rt_start = nF;
 
-        // Propagate y
-        if(vx_y - jump >= 0) {
-            int voxel_p = voxel - jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y + jump;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(y_p < h_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
+        int mag =  rs_start;
+        int mag_time = rt_start;
+        while (mag >= 1 || mag_time >= 1)
+        {
+            if(mag >= 1) {
+                mag /= 2;
             }
-        }
-        if(vx_y + jump < h) {
-            int voxel_p = voxel + jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y - jump;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t;
-                if(y_p >= 0 && y_p < h_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
+
+            if(mag_time >= 1) {
+                mag_time /= 2;
             }
+            for (int k = 0; k < knn; ++k) {
+                int x_best = current_best[k].x;
+                int y_best = current_best[k].y;
+                int t_best = current_best[k].t;
+
+                /* Sampling window */
+                int y_min = max(y_best-mag, 0);
+                int x_min = max(x_best-mag, 0);
+                int t_min = max(t_best-mag_time, 0); 
+                int y_max = min(y_best+mag+1,h_db_valid);
+                int x_max = min(x_best+mag+1,w_db_valid);
+                int t_max = min(t_best+mag_time+1,nF_db_valid);
+
+                // New random proposal from the region
+                int y_p    = y_min + curand_uniform(&state) * (y_max-y_min);
+                int x_p    = x_min + curand_uniform(&state) * (x_max-x_min);
+                int t_p    = t_min + curand_uniform(&state) * (t_max-t_min);
+
+                d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
+                    vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
+            } // knn
         }
 
-        // Propagate t
-        if(vx_t - jump >= 0) {
-            int voxel_p = voxel - h*w*jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t + jump;
-                if(t_p < nF_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
-        if(vx_t + jump < nF) {
-            int voxel_p = voxel + h*w*jump;
-            for (int k = 0; k < knn; ++k) { // get k next neighbors
-                int x_p = bestmatches_tmp[voxel_p*(knn+1) + k].x;
-                int y_p = bestmatches_tmp[voxel_p*(knn+1) + k].y;
-                int t_p = bestmatches_tmp[voxel_p*(knn+1) + k].t - jump;
-                if(t_p >= 0 && t_p < nF_db_valid) {
-                    d_improve_knn(video, db, h, w, nF, nC, knn, psz_space, psz_time,
-                        vx_y, vx_x, vx_t, y_p, x_p, t_p, current_best);
-                }
-            }
-        }
+        // Copy back PRNG state to global memory
+        rng_state[voxel] = state;
+
     } // buffer px cudaloop
