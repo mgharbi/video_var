@@ -41,7 +41,8 @@ void NNField::improve_knn(const Video<nnf_data_t> &A,const Video<nnf_data_t> &B,
     // compute distance
     nnf_data_t candidate_dist = getPatchCost(A,B, y_a,x_a,t_a,y_p,x_p,t_p);
 
-    nnf_data_t err = std::get<0>(current_best[0]);
+    // FIXME: the logic is broken here: we only add a neighbor if it beats the best
+    nnf_data_t err = std::get<0>(current_best[params_.knn-1]);
 
     if( candidate_dist < err) { // we have a better match
         MatchSet ms = all_matches;
