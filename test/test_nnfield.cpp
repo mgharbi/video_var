@@ -64,7 +64,7 @@ TEST_F(NNFieldTest, simple_nnf_gpu) {
     NNField field(&A, &B, params);
     NNFieldOutput output = field.compute_gpu();
     Video<int32_t> &nnf  = output.nnf;
-    Video<nnf_data_t> &cost  = output.error;
+    // Video<nnf_data_t> &cost  = output.error;
 
     // Check the first match is exact
     for (int i = 0; i < 10-params.patch_size_space; ++i)
@@ -96,7 +96,7 @@ TEST_F(NNFieldTest, large_nnf) {
     params.knn = 16;
     params.patch_size_time = 11;
     params.patch_size_space = 11;
-    params.verbosity = 0;
+    params.verbosity = 1;
     params.propagation_iterations = 1;
 
     Video<nnf_data_t> A(h,w,nF,3);
@@ -119,7 +119,6 @@ TEST_F(NNFieldTest, large_nnf) {
     for (int j = 0; j < w-params.patch_size_space; ++j)
     for (int k = 0; k < nF-params.patch_size_time; ++k)
     {
-
         ASSERT_EQ(nnf.at(i,j,k,0), j);
         ASSERT_EQ(nnf.at(i,j,k,1), i);
         ASSERT_EQ(nnf.at(i,j,k,2), k);

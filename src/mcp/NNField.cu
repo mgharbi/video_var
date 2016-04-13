@@ -59,6 +59,25 @@ __global__ void setup_rng_kernel(int nVoxels, curandState *state){
   }
 }
 
+__device__ void fill_patch(int tid, int voxel, int n_passes, int stride,
+        int psz_space, int psz_time, int h,int w,int nF,int nC, 
+        nnf_data_t *patch, const nnf_data_t *video) 
+{
+    for (int pass = 0; pass < n_passes; ++pass)
+    {
+        if(tid+pass*stride >= psz_space*psz_space*psz_time) {
+            continue;
+        }
+        dim3 xyt = get_patch_coord(tid + pass*stride,psz_space,psz_space);
+        for( int chan = 0 ; chan < nC ; chan++ ){
+            int vx_video = voxel + xyt.y + h*( xyt.x + w*xyt.z);
+            int patch_id = xyt.y + psz_space*(xyt.x + psz_space*(xyt.z + psz_time*chan));
+            patch[patch_id] = 
+                video[vx_video + chan*h*w*nF];
+        }
+    }
+}
+
 
 __device__ void propose(int tid, int n_passes, int stride,
         int x_p, int y_p, int t_p,
@@ -125,13 +144,13 @@ __global__ void initialize_kernel(int nVoxels,
 {
     CUDA_KERNEL_LOOP(voxel, nVoxels) {
         dim3 xyt = get_patch_coord(voxel, h, w);
-        int vx_x = xyt.x;
-        int vx_y = xyt.y;
+        int vx_x = xyt.y;
+        int vx_y = xyt.x;
         int vx_t = xyt.z;
 
-        if( vx_t >= nF-psz_time+1 || 
-            vx_x >= w-psz_space+1 ||
-            vx_y >= h-psz_space+1
+        if( vx_t > nF-psz_time || 
+            vx_x > w-psz_space ||
+            vx_y > h-psz_space
         ) { // Out of bound
             return;
         }
@@ -140,9 +159,9 @@ __global__ void initialize_kernel(int nVoxels,
         curandState state = rng_state[voxel];
 
         for (int k = 0; k < knn; ++k) {
-            int t_db = curand_uniform(&state) * nF_db_valid;
-            int x_db = curand_uniform(&state) * w_db_valid;
-            int y_db = curand_uniform(&state) * h_db_valid;
+            int t_db = 1;//curand_uniform(&state) * nF_db_valid;
+            int x_db = 1;//curand_uniform(&state) * w_db_valid;
+            int y_db = 1;//curand_uniform(&state) * h_db_valid;
             nnf[ voxel*3*knn + 3*k + 0 ] = x_db;
             nnf[ voxel*3*knn + 3*k + 1 ] = y_db;
             nnf[ voxel*3*knn + 3*k + 2 ] = t_db;
@@ -172,62 +191,63 @@ __global__ void update_cost(int nVoxels,
 
     int tid      = threadIdx.x;
     int stride   = blockDim.x;
-    int n_passes = ceil(((float) psz_space*psz_space*psz_time ) / stride);
     int psz      = psz_space*psz_space*psz_time;
+    int n_passes = ceil(((float) psz ) / stride);
 
-    __shared__ float c;
-    __shared__ nnf_data_t patch[TILE_W*TILE_H*3];
-    __shared__ int neighbors[32*3];
+    extern __shared__ int shared_ptr[];
+    int knn_offset = psz_space*psz_space*psz_time*nC;
+    nnf_data_t *patch = (nnf_data_t*) shared_ptr;
+    MatchGPU *best_matches = (MatchGPU*)(patch+knn_offset);
+
+    __shared__ nnf_data_t c;
 
     int voxel = vx_y + h*(vx_x + w*vx_t);
 
-    // Fill in neighbors
+    // zero out the aggregator
     if (tid < knn) {
-        neighbors[3*tid + 0] = nnf[voxel*3*knn + 3*tid + 0];
-        neighbors[3*tid + 1] = nnf[voxel*3*knn + 3*tid + 1];
-        neighbors[3*tid + 2] = nnf[voxel*3*knn + 3*tid + 2];
-        cost[voxel*knn + tid] = 0;
+        best_matches[tid].x = nnf[voxel*3*knn + 3*tid + 0];
+        best_matches[tid].y = nnf[voxel*3*knn + 3*tid + 1];
+        best_matches[tid].t = nnf[voxel*3*knn + 3*tid + 2];
+        best_matches[tid].cost = 0;
+        // printf("%d %d %d | %d | %d %d %d %f\n",vx_x, vx_y,vx_t,tid, best_matches[tid].x, best_matches[tid].y, best_matches[tid].t, best_matches[tid].cost);
     }
 
     // Fill in patch in shared memory
-    for (int pass = 0; pass < n_passes; ++pass)
-    {
-        if(tid+pass*stride > psz) {
-            continue;
-        }
-        dim3 xyt = get_patch_coord(tid + pass*stride,psz_space,psz_space);
-        for( int chan = 0 ; chan < nC ; chan++ ){
-            int vx_video = xyt.y+vx_y + h*( xyt.x+vx_x + w*(xyt.z+vx_t));
-            patch[xyt.y+TILE_H*(xyt.x+TILE_W*chan)] = video[vx_video+chan*h*w*nF];
-        }
-    }
+    fill_patch(tid, voxel, n_passes, stride, psz_space, psz_time, h,w,nF,nC, patch, video);
+    __syncthreads();
 
-    for (int pass = 0; pass < n_passes; ++pass)
-    {
-        if(tid+pass*stride > psz) {
-            continue;
-        }
-        dim3 xyt = get_patch_coord(tid + pass*stride, psz_space, psz_space);
-        for (int k = 0; k < knn; ++k) {
-             // zero out the aggregator
-            if (tid == 0) {
-                c = 0;
+    // TODO: proper reduction
+    for (int k = 0; k < knn; ++k) {
+        for (int pass = 0; pass < n_passes; ++pass)
+        {
+            if(tid+pass*stride >= psz) {
+                continue;
             }
-            __syncthreads();
-                int x_db = neighbors[3*k + 0];
-                int y_db = neighbors[3*k + 1];
-                int t_db = neighbors[3*k + 2];
+            dim3 xyt = get_patch_coord(tid + pass*stride, psz_space, psz_space);
+            int x_db = best_matches[k].x;
+            int y_db = best_matches[k].y;
+            int t_db = best_matches[k].t;
 
-                int vx_db = xyt.y+y_db + h*( xyt.x+x_db + w*(xyt.z+t_db));
-                for( int chan = 0 ; chan < nC ; chan++ ){
-                    nnf_data_t d = patch[xyt.y + TILE_H*(xyt.x  +TILE_W*chan)] 
-                        - db[vx_db + chan*h*w*nF];
-                    c+= d*d;
+            int vx_db = xyt.y+y_db + h*( xyt.x+x_db + w*(xyt.z+t_db));
+            for( int chan = 0 ; chan < nC ; chan++ ){
+                int patch_id = xyt.y + psz_space*(xyt.x + psz_space*(xyt.z + psz_time*chan));
+                if(vx_db > h*w*nF) {
+                    printf("%d | %d %d %d\n", vx_db, x_db, y_db, t_db);
                 }
-            __syncthreads();
-            cost[voxel*knn + k] += c;
-        } // knn loop
-    } // pass
+                nnf_data_t d = patch[patch_id] 
+                    - db[vx_db + chan*h*w*nF];
+                best_matches[k].cost += d*d;
+                // atomicAdd(&best_matches[k].cost , d*d);
+                // printf("%f %d\n", best_matches[0].cost, k);
+            }
+        } // pass
+    } // knn loop
+    __syncthreads();
+
+    if (tid < knn) {
+        cost[voxel*knn + tid ] = best_matches[tid].cost;
+    }
+    
 }
 
 
@@ -280,17 +300,7 @@ __global__ void pm_rs_kernel(int nVoxels,
     }
 
     // Fill in patch in shared memory
-    for (int pass = 0; pass < n_passes; ++pass)
-    {
-        if(tid+pass*stride > psz) {
-            continue;
-        }
-        dim3 xyt = get_patch_coord(tid + pass*stride,psz_space,psz_space);
-        for( int chan = 0 ; chan < nC ; chan++ ){
-            int vx_video = voxel + xyt.y + h*( xyt.x + w*xyt.z);
-            patch[xyt.y + psz_space*(xyt.x+psz_space*chan)] = video[vx_video + chan*h*w*nF];
-        }
-    }
+    fill_patch(tid, voxel, n_passes, stride, psz_space, psz_time, h,w,nF,nC, patch, video);
     __syncthreads();
 
     int rs_start = max(w, h); 
@@ -301,9 +311,6 @@ __global__ void pm_rs_kernel(int nVoxels,
 
     while (mag >= 1 || mag_time >= 1)
     {
-        // if(tid == 0) {
-        //     printf("sampling %d %d\n", mag, mag_time);
-        // }
         for (int k = 0; k < knn; ++k) {
             int x_best = best_matches[k].x;
             int y_best = best_matches[k].y;
@@ -394,17 +401,7 @@ __global__ void pm_propag_kernel(int nVoxels,
     }
 
     // Fill in patch in shared memory
-    for (int pass = 0; pass < n_passes; ++pass)
-    {
-        if(tid+pass*stride > psz) {
-            continue;
-        }
-        dim3 xyt = get_patch_coord(tid + pass*stride,psz_space,psz_space);
-        for( int chan = 0 ; chan < nC ; chan++ ){
-            int vx_video = voxel + xyt.y + h*( xyt.x + w*xyt.z);
-            patch[xyt.y + psz_space*(xyt.x+psz_space*chan)] = video[vx_video + chan*h*w*nF];
-        }
-    }
+    fill_patch(tid, voxel, n_passes, stride, psz_space, psz_time, h,w,nF,nC, patch, video);
     __syncthreads();
 
     // Propagate x
@@ -531,15 +528,15 @@ NNFieldOutput NNField::compute_gpu() {
     cudaMalloc((void**) &db_d, sz_db);
     cudaMemcpy(db_d, database_->dataReader(),sz_db, cudaMemcpyHostToDevice);
 
-    int* nnf_d         = nullptr;
-    nnf_data_t* cost_d = nullptr;
+    int* nnf_d             = nullptr;
+    nnf_data_t* cost_d     = nullptr;
     int* nnf_tmp_d         = nullptr;
     nnf_data_t* cost_tmp_d = nullptr;
-    int sz_nnf         = h*w*nF*3*knn*sizeof(int);
-    int sz_cost        = h*w*nF*knn*sizeof(nnf_data_t);
+    int sz_nnf             = h*w*nF*3*knn*sizeof(int);
+    int sz_cost            = h*w*nF*knn*sizeof(nnf_data_t);
     cudaMalloc((void**) &nnf_d, sz_nnf);
     cudaMalloc((void**) &cost_d, sz_cost);
-    cudaMemset(nnf_d, 0, sz_cost);
+    cudaMemset(nnf_d, 0, sz_nnf);
     cudaMemset(cost_d, 0, sz_cost);
     cudaMalloc((void**) &nnf_tmp_d, sz_nnf);
     cudaMalloc((void**) &cost_tmp_d, sz_cost);
@@ -556,6 +553,7 @@ NNFieldOutput NNField::compute_gpu() {
     curandState *d_state;
     cudaMalloc(&d_state, nVoxels*sizeof(curandState));
     setup_rng_kernel<<<GPU_GET_BLOCKS(nVoxels), GPU_THREADS>>>(nVoxels, d_state);
+    cudaDeviceSynchronize();
 
     initialize_kernel<<<GPU_GET_BLOCKS(nVoxels), GPU_THREADS>>>(
             nVoxels,
@@ -569,10 +567,14 @@ NNFieldOutput NNField::compute_gpu() {
             nnf_d,
             cost_d
     );
+    cudaDeviceSynchronize();
+
     dim3 tpb_cost(GPU_THREADS, 1, 1); // threads per block
     dim3 nb_cost(w_valid, h_valid, nF_valid); // number of blocks
-    size_t shared_memory_cost = (knn+1)*3*sizeof(int);
-    update_cost<<<nb_cost, tpb_cost>>>(
+    size_t shared_memory_cost = 
+        psz_space*psz_space*psz_time*nC*sizeof(nnf_data_t)
+        + knn*sizeof(MatchGPU);
+    update_cost<<<nb_cost, tpb_cost, shared_memory_cost>>>(
             nVoxels,
             video_d,
             db_d,
@@ -587,64 +589,64 @@ NNFieldOutput NNField::compute_gpu() {
     cudaDeviceSynchronize();
     CudaCheckError();
 
-    for (int iter = 0; iter < params_.propagation_iterations; ++iter) 
-    {
-        if(params_.verbosity > 0) {
-            printf("  - iteration %d/%d\n", iter+1,params_.propagation_iterations);
-        }
-
-        // Jump-flood propagation
-        for(int jump_flood_step = 1 ; jump_flood_step > 0; jump_flood_step /= 2) {
-        // for(int jump_flood_step = params_.jump_flood_step ; jump_flood_step > 0; jump_flood_step /= 2) {
-            if(params_.verbosity > 1) {
-                printf("    jump flood with step %d\n", jump_flood_step);
-            }
-
-            // swap buffers (copy to tmp)
-            cudaMemcpy(nnf_tmp_d, nnf_d, sz_nnf, cudaMemcpyDeviceToDevice);
-            cudaMemcpy(cost_tmp_d, cost_d, sz_cost, cudaMemcpyDeviceToDevice);
-
-            // flood, nnf_tmp is the nnf of the previous iteration, nnf is being updated
-            dim3 tpb_propag(GPU_THREADS, 1, 1); // threads per block
-            dim3 nb_propag(w_valid, h_valid, nF_valid); // number of blocks
-            size_t shared_memory_propag = 
-                psz_space*psz_space*psz_time*nC*sizeof(nnf_data_t)
-                + (knn+1)*sizeof(MatchGPU);
-            pm_propag_kernel<<<nb_propag, tpb_propag, shared_memory_propag>>>(
-                    nVoxels,
-                    video_d,
-                    db_d,
-                    h, w, nF,
-                    h_db_valid, w_db_valid, nF_db_valid, 
-                    nC, knn,
-                    psz_space, psz_time,
-                    nnf_d, cost_d,
-                    nnf_tmp_d, cost_tmp_d,
-                    jump_flood_step
-            );
-            cudaDeviceSynchronize();
-            CudaCheckError();
-        } // jump flood
-
-        // Random sampling pass
-        dim3 tpb_propag(GPU_THREADS, 1, 1); // threads per block
-        dim3 nb_propag(w_valid, h_valid, nF_valid); // number of blocks
-        size_t shared_memory_propag = 
-            psz_space*psz_space*psz_time*nC*sizeof(nnf_data_t)
-            + (knn+1)*sizeof(MatchGPU);
-        pm_rs_kernel<<<nb_propag, tpb_propag, shared_memory_propag>>>(
-                nVoxels,
-                video_d,
-                db_d,
-                h, w, nF,
-                h_db_valid, w_db_valid, nF_db_valid, 
-                nC, knn,
-                psz_space, psz_time,
-                nnf_d, cost_d,
-                d_state
-        );
-        cudaDeviceSynchronize();
-    } // propagation iteration
+    // for (int iter = 0; iter < params_.propagation_iterations; ++iter) 
+    // {
+    //     if(params_.verbosity > 0) {
+    //         printf("  - iteration %d/%d\n", iter+1,params_.propagation_iterations);
+    //     }
+    //
+    //     // Jump-flood propagation
+    //     // for(int jump_flood_step = 1 ; jump_flood_step > 0; jump_flood_step /= 2) {
+    //     for(int jump_flood_step = params_.jump_flood_step ; jump_flood_step > 0; jump_flood_step /= 2) {
+    //         if(params_.verbosity > 1) {
+    //             printf("    jump flood with step %d\n", jump_flood_step);
+    //         }
+    //
+    //         // swap buffers (copy to tmp)
+    //         cudaMemcpy(nnf_tmp_d, nnf_d, sz_nnf, cudaMemcpyDeviceToDevice);
+    //         cudaMemcpy(cost_tmp_d, cost_d, sz_cost, cudaMemcpyDeviceToDevice);
+    //
+    //         // flood, nnf_tmp is the nnf of the previous iteration, nnf is being updated
+    //         dim3 tpb_propag(GPU_THREADS, 1, 1); // threads per block
+    //         dim3 nb_propag(w_valid, h_valid, nF_valid); // number of blocks
+    //         size_t shared_memory_propag = 
+    //             psz_space*psz_space*psz_time*nC*sizeof(nnf_data_t)
+    //             + (knn+1)*sizeof(MatchGPU);
+    //         pm_propag_kernel<<<nb_propag, tpb_propag, shared_memory_propag>>>(
+    //                 nVoxels,
+    //                 video_d,
+    //                 db_d,
+    //                 h, w, nF,
+    //                 h_db_valid, w_db_valid, nF_db_valid, 
+    //                 nC, knn,
+    //                 psz_space, psz_time,
+    //                 nnf_d, cost_d,
+    //                 nnf_tmp_d, cost_tmp_d,
+    //                 jump_flood_step
+    //         );
+    //         cudaDeviceSynchronize();
+    //         CudaCheckError();
+    //     } // jump flood
+    //
+    //     // Random sampling pass
+    //     dim3 tpb_propag(GPU_THREADS, 1, 1); // threads per block
+    //     dim3 nb_propag(w_valid, h_valid, nF_valid); // number of blocks
+    //     size_t shared_memory_propag = 
+    //         psz_space*psz_space*psz_time*nC*sizeof(nnf_data_t)
+    //         + (knn+1)*sizeof(MatchGPU);
+    //     pm_rs_kernel<<<nb_propag, tpb_propag, shared_memory_propag>>>(
+    //             nVoxels,
+    //             video_d,
+    //             db_d,
+    //             h, w, nF,
+    //             h_db_valid, w_db_valid, nF_db_valid, 
+    //             nC, knn,
+    //             psz_space, psz_time,
+    //             nnf_d, cost_d,
+    //             d_state
+    //     );
+    //     cudaDeviceSynchronize();
+    // } // propagation iteration
 
     // Prepare host output buffers
     NNFieldOutput output(h,w,nF, knn);
